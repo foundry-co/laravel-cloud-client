@@ -1,0 +1,43 @@
+{
+    "name": "foundry-co/laravel-cloud-client",
+    "description": "A Laravel client for the Laravel Cloud API",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0",
+        "nesbot/carbon": "^2.0|^3.0",
+        "saloonphp/saloon": "^3.0",
+        "saloonphp/pagination-plugin": "^2.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^2.0|^3.0",
+        "pestphp/pest-plugin-laravel": "^2.0|^3.0",
+        "laravel/pint": "^1.0"
+    },
+    "autoload": {
+        "psr-4": { "Foundry\\LaravelCloudClient\\": "src/" }
+    },
+    "autoload-dev": {
+        "psr-4": { "Foundry\\LaravelCloudClient\\Tests\\": "tests/" }
+    },
+    "extra": {
+        "laravel": {
+            "providers": ["Foundry\\LaravelCloudClient\\CloudServiceProvider"],
+            "aliases": { "Cloud": "Foundry\\LaravelCloudClient\\Facades\\Cloud" }
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "policy": {
+            "advisories": {
+                "block": false
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
