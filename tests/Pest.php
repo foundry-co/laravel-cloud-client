@@ -1,5 +1,5 @@
 <?php
 
-use Foundry\LaravelCloudClient\Tests\TestCase;
+use FoundryCo\LaravelCloudClient\Tests\TestCase;
 
 uses(TestCase::class)->in('.');

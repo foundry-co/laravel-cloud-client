@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\DatabaseCluster;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateDatabaseClusterRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateDatabaseClusterRequest;
+use FoundryCo\LaravelCloudClient\Data\DatabaseCluster;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseClusterRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateDatabaseClusterRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

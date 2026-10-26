@@ -17,15 +17,15 @@
         "laravel/pint": "^1.0"
     },
     "autoload": {
-        "psr-4": { "Foundry\\LaravelCloudClient\\": "src/" }
+        "psr-4": { "FoundryCo\\LaravelCloudClient\\": "src/" }
     },
     "autoload-dev": {
-        "psr-4": { "Foundry\\LaravelCloudClient\\Tests\\": "tests/" }
+        "psr-4": { "FoundryCo\\LaravelCloudClient\\Tests\\": "tests/" }
     },
     "extra": {
         "laravel": {
-            "providers": ["Foundry\\LaravelCloudClient\\CloudServiceProvider"],
-            "aliases": { "Cloud": "Foundry\\LaravelCloudClient\\Facades\\Cloud" }
+            "providers": ["FoundryCo\\LaravelCloudClient\\CloudServiceProvider"],
+            "aliases": { "Cloud": "FoundryCo\\LaravelCloudClient\\Facades\\Cloud" }
         }
     },
     "config": {

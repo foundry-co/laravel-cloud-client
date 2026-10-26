@@ -1,6 +1,6 @@
 <?php
 
-namespace Foundry\LaravelCloudClient;
+namespace FoundryCo\LaravelCloudClient;
 
 use Illuminate\Support\ServiceProvider;
 

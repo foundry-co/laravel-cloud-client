@@ -1,6 +1,6 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Http;
+namespace FoundryCo\LaravelCloudClient\Http;
 
 use Saloon\Contracts\Body\HasBody;
 use Saloon\Enums\Method;

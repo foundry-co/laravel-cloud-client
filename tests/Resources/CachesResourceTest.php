@@ -1,11 +1,11 @@
 <?php
 
-use Foundry\LaravelCloudClient\CloudClient;
-use Foundry\LaravelCloudClient\Data\Cache;
-use Foundry\LaravelCloudClient\Exceptions\AuthenticationException;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateCacheRequest;
+use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Data\Cache;
+use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateCacheRequest;
 use Illuminate\Support\Collection;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;

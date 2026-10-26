@@ -1,9 +1,9 @@
 <?php
 
-use Foundry\LaravelCloudClient\CloudClient;
-use Foundry\LaravelCloudClient\Data\Organization;
-use Foundry\LaravelCloudClient\Data\Region;
-use Foundry\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Data\Organization;
+use FoundryCo\LaravelCloudClient\Data\Region;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
 use Illuminate\Support\Collection;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;

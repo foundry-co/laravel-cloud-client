@@ -1,9 +1,9 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\Usage;
-use Foundry\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Data\Usage;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
 
 class UsageResource extends Resource
 {

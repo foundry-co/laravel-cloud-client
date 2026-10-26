@@ -1,11 +1,11 @@
 <?php
 
-use Foundry\LaravelCloudClient\CloudClient;
-use Foundry\LaravelCloudClient\Data\DatabaseCluster;
-use Foundry\LaravelCloudClient\Exceptions\AuthenticationException;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateDatabaseClusterRequest;
+use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Data\DatabaseCluster;
+use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseClusterRequest;
 use Illuminate\Support\Collection;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;

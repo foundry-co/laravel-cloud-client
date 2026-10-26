@@ -1,9 +1,9 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Data;
+namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Foundry\LaravelCloudClient\Enums\CommandStatus;
+use FoundryCo\LaravelCloudClient\Enums\CommandStatus;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 

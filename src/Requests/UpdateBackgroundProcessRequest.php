@@ -1,6 +1,6 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Requests;
+namespace FoundryCo\LaravelCloudClient\Requests;
 
 class UpdateBackgroundProcessRequest extends CloudRequest
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Enums;
+namespace FoundryCo\LaravelCloudClient\Enums;
 
 enum FilesystemType: string
 {

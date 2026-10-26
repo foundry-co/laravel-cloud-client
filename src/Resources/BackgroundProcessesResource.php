@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\BackgroundProcess;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateBackgroundProcessRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateBackgroundProcessRequest;
+use FoundryCo\LaravelCloudClient\Data\BackgroundProcess;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateBackgroundProcessRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateBackgroundProcessRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

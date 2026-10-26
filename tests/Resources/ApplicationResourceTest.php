@@ -1,13 +1,13 @@
 <?php
 
-use Foundry\LaravelCloudClient\CloudClient;
-use Foundry\LaravelCloudClient\Data\Application;
-use Foundry\LaravelCloudClient\Exceptions\AuthenticationException;
-use Foundry\LaravelCloudClient\Exceptions\NotFoundException;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateApplicationRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateApplicationRequest;
+use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Data\Application;
+use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
+use FoundryCo\LaravelCloudClient\Exceptions\NotFoundException;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateApplicationRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateApplicationRequest;
 use Illuminate\Support\Collection;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;

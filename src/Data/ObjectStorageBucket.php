@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Data;
+namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Foundry\LaravelCloudClient\Enums\FilesystemJurisdiction;
-use Foundry\LaravelCloudClient\Enums\FilesystemStatus;
-use Foundry\LaravelCloudClient\Enums\FilesystemType;
-use Foundry\LaravelCloudClient\Enums\FilesystemVisibility;
+use FoundryCo\LaravelCloudClient\Enums\FilesystemJurisdiction;
+use FoundryCo\LaravelCloudClient\Enums\FilesystemStatus;
+use FoundryCo\LaravelCloudClient\Enums\FilesystemType;
+use FoundryCo\LaravelCloudClient\Enums\FilesystemVisibility;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 

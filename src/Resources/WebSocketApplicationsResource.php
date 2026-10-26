@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\WebsocketApplication;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateWebSocketApplicationRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateWebSocketApplicationRequest;
+use FoundryCo\LaravelCloudClient\Data\WebsocketApplication;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateWebSocketApplicationRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateWebSocketApplicationRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\Application;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Http\MultipartRequest;
-use Foundry\LaravelCloudClient\Requests\CreateApplicationRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateApplicationRequest;
+use FoundryCo\LaravelCloudClient\Data\Application;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Http\MultipartRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateApplicationRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateApplicationRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

@@ -1,5 +1,5 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Exceptions;
+namespace FoundryCo\LaravelCloudClient\Exceptions;
 
 class NotFoundException extends CloudApiException {}

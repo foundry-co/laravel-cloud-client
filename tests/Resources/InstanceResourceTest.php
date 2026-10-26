@@ -1,14 +1,14 @@
 <?php
 
-use Foundry\LaravelCloudClient\CloudClient;
-use Foundry\LaravelCloudClient\Data\EnvironmentInstance;
-use Foundry\LaravelCloudClient\Enums\InstanceScalingType;
-use Foundry\LaravelCloudClient\Enums\InstanceType;
-use Foundry\LaravelCloudClient\Exceptions\AuthenticationException;
-use Foundry\LaravelCloudClient\Exceptions\NotFoundException;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateInstanceRequest;
+use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Data\EnvironmentInstance;
+use FoundryCo\LaravelCloudClient\Enums\InstanceScalingType;
+use FoundryCo\LaravelCloudClient\Enums\InstanceType;
+use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
+use FoundryCo\LaravelCloudClient\Exceptions\NotFoundException;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateInstanceRequest;
 use Illuminate\Support\Collection;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;

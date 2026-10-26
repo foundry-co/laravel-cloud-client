@@ -1,6 +1,6 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Requests;
+namespace FoundryCo\LaravelCloudClient\Requests;
 
 use Illuminate\Contracts\Support\Arrayable;
 

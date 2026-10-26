@@ -1,13 +1,13 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\CloudClient;
-use Foundry\LaravelCloudClient\Exceptions\AuthenticationException;
-use Foundry\LaravelCloudClient\Exceptions\CloudApiException;
-use Foundry\LaravelCloudClient\Exceptions\NotFoundException;
-use Foundry\LaravelCloudClient\Exceptions\ValidationException;
-use Foundry\LaravelCloudClient\Http\CloudRequest;
+use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
+use FoundryCo\LaravelCloudClient\Exceptions\CloudApiException;
+use FoundryCo\LaravelCloudClient\Exceptions\NotFoundException;
+use FoundryCo\LaravelCloudClient\Exceptions\ValidationException;
+use FoundryCo\LaravelCloudClient\Http\CloudRequest;
 use Illuminate\Support\Collection;
 use Saloon\Exceptions\Request\RequestException;
 use Saloon\Http\Response;

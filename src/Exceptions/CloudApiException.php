@@ -1,6 +1,6 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Exceptions;
+namespace FoundryCo\LaravelCloudClient\Exceptions;
 
 use RuntimeException;
 

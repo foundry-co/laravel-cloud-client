@@ -1,9 +1,9 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Tests;
+namespace FoundryCo\LaravelCloudClient\Tests;
 
-use Foundry\LaravelCloudClient\CloudServiceProvider;
-use Foundry\LaravelCloudClient\Facades\Cloud;
+use FoundryCo\LaravelCloudClient\CloudServiceProvider;
+use FoundryCo\LaravelCloudClient\Facades\Cloud;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 class TestCase extends BaseTestCase

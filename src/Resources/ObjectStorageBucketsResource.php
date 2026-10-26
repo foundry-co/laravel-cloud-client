@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\ObjectStorageBucket;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateObjectStorageBucketRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateObjectStorageBucketRequest;
+use FoundryCo\LaravelCloudClient\Data\ObjectStorageBucket;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateObjectStorageBucketRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateObjectStorageBucketRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

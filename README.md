@@ -25,7 +25,7 @@ LARAVEL_CLOUD_TOKEN=your-token-here
 Use the `Cloud` facade or resolve `CloudClient` from the container.
 
 ```php
-use Foundry\LaravelCloudClient\Facades\Cloud;
+use FoundryCo\LaravelCloudClient\Facades\Cloud;
 ```
 
 ---
@@ -390,7 +390,7 @@ In your application tests, use Saloon's `MockClient`:
 ```php
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Faking\MockResponse;
-use Foundry\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\CloudClient;
 
 $mock = new MockClient([
     '*' => MockResponse::make(['data' => [], 'links' => ['next' => null]]),

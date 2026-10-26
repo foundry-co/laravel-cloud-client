@@ -1,10 +1,10 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\DatabaseCluster;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateDatabaseRestoreRequest;
+use FoundryCo\LaravelCloudClient\Data\DatabaseCluster;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseRestoreRequest;
 use Saloon\Enums\Method;
 
 class DatabaseRestoresResource extends Resource

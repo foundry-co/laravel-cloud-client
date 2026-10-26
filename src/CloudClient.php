@@ -1,26 +1,26 @@
 <?php
 
-namespace Foundry\LaravelCloudClient;
+namespace FoundryCo\LaravelCloudClient;
 
-use Foundry\LaravelCloudClient\Resources\ApplicationsResource;
-use Foundry\LaravelCloudClient\Resources\BackgroundProcessesResource;
-use Foundry\LaravelCloudClient\Resources\BucketKeysResource;
-use Foundry\LaravelCloudClient\Resources\CachesResource;
-use Foundry\LaravelCloudClient\Resources\CommandsResource;
-use Foundry\LaravelCloudClient\Resources\DatabaseClustersResource;
-use Foundry\LaravelCloudClient\Resources\DatabaseRestoresResource;
-use Foundry\LaravelCloudClient\Resources\DatabaseSnapshotsResource;
-use Foundry\LaravelCloudClient\Resources\DatabasesResource;
-use Foundry\LaravelCloudClient\Resources\DedicatedClustersResource;
-use Foundry\LaravelCloudClient\Resources\DeploymentsResource;
-use Foundry\LaravelCloudClient\Resources\DomainsResource;
-use Foundry\LaravelCloudClient\Resources\EnvironmentsResource;
-use Foundry\LaravelCloudClient\Resources\InstancesResource;
-use Foundry\LaravelCloudClient\Resources\MetaResource;
-use Foundry\LaravelCloudClient\Resources\ObjectStorageBucketsResource;
-use Foundry\LaravelCloudClient\Resources\UsageResource;
-use Foundry\LaravelCloudClient\Resources\WebSocketApplicationsResource;
-use Foundry\LaravelCloudClient\Resources\WebSocketClustersResource;
+use FoundryCo\LaravelCloudClient\Resources\ApplicationsResource;
+use FoundryCo\LaravelCloudClient\Resources\BackgroundProcessesResource;
+use FoundryCo\LaravelCloudClient\Resources\BucketKeysResource;
+use FoundryCo\LaravelCloudClient\Resources\CachesResource;
+use FoundryCo\LaravelCloudClient\Resources\CommandsResource;
+use FoundryCo\LaravelCloudClient\Resources\DatabaseClustersResource;
+use FoundryCo\LaravelCloudClient\Resources\DatabaseRestoresResource;
+use FoundryCo\LaravelCloudClient\Resources\DatabaseSnapshotsResource;
+use FoundryCo\LaravelCloudClient\Resources\DatabasesResource;
+use FoundryCo\LaravelCloudClient\Resources\DedicatedClustersResource;
+use FoundryCo\LaravelCloudClient\Resources\DeploymentsResource;
+use FoundryCo\LaravelCloudClient\Resources\DomainsResource;
+use FoundryCo\LaravelCloudClient\Resources\EnvironmentsResource;
+use FoundryCo\LaravelCloudClient\Resources\InstancesResource;
+use FoundryCo\LaravelCloudClient\Resources\MetaResource;
+use FoundryCo\LaravelCloudClient\Resources\ObjectStorageBucketsResource;
+use FoundryCo\LaravelCloudClient\Resources\UsageResource;
+use FoundryCo\LaravelCloudClient\Resources\WebSocketApplicationsResource;
+use FoundryCo\LaravelCloudClient\Resources\WebSocketClustersResource;
 use Saloon\Http\Auth\TokenAuthenticator;
 use Saloon\Http\Connector;
 use Saloon\Http\Request;

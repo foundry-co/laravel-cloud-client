@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\BucketKey;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateBucketKeyRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateBucketKeyRequest;
+use FoundryCo\LaravelCloudClient\Data\BucketKey;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateBucketKeyRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateBucketKeyRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

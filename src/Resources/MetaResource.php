@@ -1,10 +1,10 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\Organization;
-use Foundry\LaravelCloudClient\Data\Region;
-use Foundry\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Data\Organization;
+use FoundryCo\LaravelCloudClient\Data\Region;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
 use Illuminate\Support\Collection;
 
 class MetaResource extends Resource

@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\WebsocketCluster;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateWebSocketClusterRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateWebSocketClusterRequest;
+use FoundryCo\LaravelCloudClient\Data\WebsocketCluster;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateWebSocketClusterRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateWebSocketClusterRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

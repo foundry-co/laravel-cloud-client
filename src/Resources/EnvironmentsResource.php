@@ -1,15 +1,15 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\Environment;
-use Foundry\LaravelCloudClient\Data\EnvironmentLog;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\AddEnvironmentVariablesRequest;
-use Foundry\LaravelCloudClient\Requests\CreateEnvironmentRequest;
-use Foundry\LaravelCloudClient\Requests\ReplaceEnvironmentVariablesRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateEnvironmentRequest;
+use FoundryCo\LaravelCloudClient\Data\Environment;
+use FoundryCo\LaravelCloudClient\Data\EnvironmentLog;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\AddEnvironmentVariablesRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateEnvironmentRequest;
+use FoundryCo\LaravelCloudClient\Requests\ReplaceEnvironmentVariablesRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateEnvironmentRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\Cache;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateCacheRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateCacheRequest;
+use FoundryCo\LaravelCloudClient\Data\Cache;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateCacheRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateCacheRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

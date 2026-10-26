@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Data;
+namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Foundry\LaravelCloudClient\Enums\WebsocketServerConnectionDistributionStrategy;
-use Foundry\LaravelCloudClient\Enums\WebsocketServerMaxConnection;
-use Foundry\LaravelCloudClient\Enums\WebsocketServerStatus;
-use Foundry\LaravelCloudClient\Enums\WebsocketServerType;
+use FoundryCo\LaravelCloudClient\Enums\WebsocketServerConnectionDistributionStrategy;
+use FoundryCo\LaravelCloudClient\Enums\WebsocketServerMaxConnection;
+use FoundryCo\LaravelCloudClient\Enums\WebsocketServerStatus;
+use FoundryCo\LaravelCloudClient\Enums\WebsocketServerType;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 

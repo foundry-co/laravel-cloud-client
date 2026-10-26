@@ -1,12 +1,12 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\Domain;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateDomainRequest;
-use Foundry\LaravelCloudClient\Requests\UpdateDomainRequest;
+use FoundryCo\LaravelCloudClient\Data\Domain;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateDomainRequest;
+use FoundryCo\LaravelCloudClient\Requests\UpdateDomainRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\DatabaseSnapshot;
-use Foundry\LaravelCloudClient\Http\GetRequest;
-use Foundry\LaravelCloudClient\Http\JsonRequest;
-use Foundry\LaravelCloudClient\Requests\CreateDatabaseSnapshotRequest;
+use FoundryCo\LaravelCloudClient\Data\DatabaseSnapshot;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Http\JsonRequest;
+use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseSnapshotRequest;
 use Illuminate\Support\Collection;
 use Saloon\Enums\Method;
 

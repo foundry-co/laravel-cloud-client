@@ -1,9 +1,9 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Resources;
+namespace FoundryCo\LaravelCloudClient\Resources;
 
-use Foundry\LaravelCloudClient\Data\DedicatedCluster;
-use Foundry\LaravelCloudClient\Http\GetRequest;
+use FoundryCo\LaravelCloudClient\Data\DedicatedCluster;
+use FoundryCo\LaravelCloudClient\Http\GetRequest;
 use Illuminate\Support\Collection;
 
 class DedicatedClustersResource extends Resource

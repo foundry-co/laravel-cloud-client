@@ -1,9 +1,9 @@
 <?php
 
-namespace Foundry\LaravelCloudClient\Requests;
+namespace FoundryCo\LaravelCloudClient\Requests;
 
-use Foundry\LaravelCloudClient\Enums\InstanceScalingType;
-use Foundry\LaravelCloudClient\Enums\InstanceType;
+use FoundryCo\LaravelCloudClient\Enums\InstanceScalingType;
+use FoundryCo\LaravelCloudClient\Enums\InstanceType;
 
 class CreateInstanceRequest extends CloudRequest
 {
