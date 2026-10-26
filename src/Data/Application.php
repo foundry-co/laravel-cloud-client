@@ -3,25 +3,35 @@
 namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesItself;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesItself;
+use FoundryCo\LaravelCloudClient\Resources\ApplicationsResource;
+use FoundryCo\LaravelCloudClient\Resources\EnvironmentsResource;
 
-class Application implements Arrayable, Jsonable
+class Application extends Model
 {
+    use DeletesItself, UpdatesItself;
+
+    protected static string $resource = ApplicationsResource::class;
+
     public function __construct(
         public readonly string $id,
         public readonly string $name,
         public readonly string $slug,
         public readonly string $region,
-        public readonly ?string $repositoryFullName,
-        public readonly ?string $repositoryBranch,
+        public readonly ?string $rootDirectory,
         public readonly ?string $slackChannel,
-        public readonly ?string $avatarUrl,
+        public readonly string $avatarUrl,
+        public readonly ?string $notes,
+        public readonly string $framework,
+        public readonly string $language,
         public readonly ?CarbonImmutable $createdAt,
+        public readonly ?array $repository,
+        public readonly ?string $repositoryId,
         public readonly ?string $organizationId,
+        public readonly array $environmentsIds,
+        public readonly array $deploymentsIds,
         public readonly ?string $defaultEnvironmentId,
-        public readonly array $environmentIds,
-        public readonly ?Organization $organization,
     ) {}
 
     public static function createFromResponse(array $response): static
@@ -29,35 +39,25 @@ class Application implements Arrayable, Jsonable
         $data = $response['data'] ?? $response;
         $attrs = $data['attributes'] ?? [];
         $relationships = $data['relationships'] ?? [];
-        $included = $response['included'] ?? [];
-
-        $organizationId = $relationships['organization']['data']['id'] ?? null;
-
-        $organization = null;
-        if ($organizationId) {
-            $orgData = collect($included)->first(fn ($item) => $item['type'] === 'organizations' && $item['id'] === $organizationId);
-            if ($orgData) {
-                $organization = Organization::createFromResponse(['data' => $orgData]);
-            }
-        }
-
-        $environmentIds = collect($relationships['environments']['data'] ?? [])->pluck('id')->all();
-        $defaultEnvironmentId = $relationships['defaultEnvironment']['data']['id'] ?? null;
 
         return new static(
             id: $data['id'] ?? '',
             name: $attrs['name'] ?? '',
             slug: $attrs['slug'] ?? '',
             region: $attrs['region'] ?? '',
-            repositoryFullName: $attrs['repository_full_name'] ?? null,
-            repositoryBranch: $attrs['repository_branch'] ?? null,
+            rootDirectory: $attrs['root_directory'] ?? null,
             slackChannel: $attrs['slack_channel'] ?? null,
-            avatarUrl: $attrs['avatar_url'] ?? null,
+            avatarUrl: $attrs['avatar_url'] ?? '',
+            notes: $attrs['notes'] ?? null,
+            framework: $attrs['framework'] ?? '',
+            language: $attrs['language'] ?? '',
             createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            organizationId: $organizationId,
-            defaultEnvironmentId: $defaultEnvironmentId,
-            environmentIds: $environmentIds,
-            organization: $organization,
+            repository: $attrs['repository'] ?? null,
+            repositoryId: $relationships['repository']['data']['id'] ?? null,
+            organizationId: $relationships['organization']['data']['id'] ?? null,
+            environmentsIds: collect($relationships['environments']['data'] ?? [])->pluck('id')->all(),
+            deploymentsIds: collect($relationships['deployments']['data'] ?? [])->pluck('id')->all(),
+            defaultEnvironmentId: $relationships['defaultEnvironment']['data']['id'] ?? null,
         );
     }
 
@@ -68,20 +68,34 @@ class Application implements Arrayable, Jsonable
             'name' => $this->name,
             'slug' => $this->slug,
             'region' => $this->region,
-            'repository_full_name' => $this->repositoryFullName,
-            'repository_branch' => $this->repositoryBranch,
+            'root_directory' => $this->rootDirectory,
             'slack_channel' => $this->slackChannel,
             'avatar_url' => $this->avatarUrl,
+            'notes' => $this->notes,
+            'framework' => $this->framework,
+            'language' => $this->language,
             'created_at' => $this->createdAt?->toIso8601String(),
+            'repository' => $this->repository,
+            'repository_id' => $this->repositoryId,
             'organization_id' => $this->organizationId,
+            'environments_ids' => $this->environmentsIds,
+            'deployments_ids' => $this->deploymentsIds,
             'default_environment_id' => $this->defaultEnvironmentId,
-            'environment_ids' => $this->environmentIds,
-            'organization' => $this->organization?->toArray(),
         ];
     }
 
-    public function toJson($options = 0): string
+    public function environments(): EnvironmentsResource
     {
-        return json_encode($this->toArray(), $options);
+        return $this->children(EnvironmentsResource::class);
+    }
+
+    public function uploadAvatar(string $file): static
+    {
+        return $this->resource()->uploadAvatar($this->id, $file);
+    }
+
+    public function deleteAvatar(): void
+    {
+        $this->resource()->deleteAvatar($this->id);
     }
 }

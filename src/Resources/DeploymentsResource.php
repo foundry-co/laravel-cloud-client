@@ -2,45 +2,32 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
 use FoundryCo\LaravelCloudClient\Data\Deployment;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateDeploymentRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Deployment> list(?string $status = null, ?string $branchName = null, ?string $commitHash = null)
+ * @method Deployment find(string $id)
+ */
 class DeploymentsResource extends Resource
 {
-    public function list(string $environmentId, ?string $status = null, ?string $branchName = null, ?string $commitHash = null): Collection
+    use FindsRecords, ListsRecords;
+
+    protected string $model = Deployment::class;
+
+    protected string $collection = '/environments/{parent}/deployments';
+
+    protected string $item = '/deployments/{id}';
+
+    public function initiate(): Deployment
     {
-        return $this->paginateAll(
-            new GetRequest("/environments/{$environmentId}/deployments", array_filter([
-                'filter[status]' => $status,
-                'filter[branch_name]' => $branchName,
-                'filter[commit_hash]' => $commitHash,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => Deployment::createFromResponse($item)
-        );
+        return $this->hydrate($this->client->post($this->path('/environments/{parent}/deployments')));
     }
 
-    public function get(string $deploymentId): Deployment
+    public function logs(string $id): array
     {
-        $response = $this->send(new GetRequest("/deployments/{$deploymentId}"));
-
-        return Deployment::createFromResponse($response->json());
-    }
-
-    public function initiate(CreateDeploymentRequest $data): Deployment
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/environments/{$data->environmentId}/deployments", $data->toArray()));
-
-        return Deployment::createFromResponse($response->json());
-    }
-
-    public function logs(string $deploymentId): array
-    {
-        $response = $this->send(new GetRequest("/deployments/{$deploymentId}/logs"));
-
-        return $response->json();
+        return $this->client->get("/deployments/{$id}/logs");
     }
 }

@@ -2,63 +2,40 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\Application;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Http\MultipartRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateApplicationRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateApplicationRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Application> list(?string $name = null, ?string $region = null, ?string $slug = null)
+ * @method Application find(string $id)
+ * @method Application create(string $repository, string $name, string $region, mixed $starterKit = null, ?string $buildCommand = null, ?string $sourceControlProviderType = null, ?string $rootDirectory = null, ?string $clusterId = null)
+ * @method Application update(string $id, ?string $sourceControlProviderType = null, ?string $name = null, ?string $slug = null, ?string $defaultEnvironmentId = null, ?string $repository = null, ?string $slackChannel = null)
+ * @method void delete(string $id)
+ */
 class ApplicationsResource extends Resource
 {
-    public function list(?string $name = null, ?string $region = null, ?string $slug = null): Collection
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
+
+    protected string $model = Application::class;
+
+    protected string $collection = '/applications';
+
+    protected string $item = '/applications/{id}';
+
+    protected array $creating = ['repository', 'name', 'region'];
+
+    public function uploadAvatar(string $id, string $file): Application
     {
-        return $this->paginateAll(
-            new GetRequest('/applications', array_filter([
-                'filter[name]' => $name,
-                'filter[region]' => $region,
-                'filter[slug]' => $slug,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => Application::createFromResponse($item)
-        );
+        return $this->hydrate($this->client->upload("/applications/{$id}/avatar", 'avatar', $file));
     }
 
-    public function get(string $applicationId): Application
+    public function deleteAvatar(string $id): void
     {
-        $response = $this->send(new GetRequest("/applications/{$applicationId}"));
-
-        return Application::createFromResponse($response->json());
-    }
-
-    public function create(CreateApplicationRequest $data): Application
-    {
-        $response = $this->send(new JsonRequest(Method::POST, '/applications', $data->toArray()));
-
-        return Application::createFromResponse($response->json());
-    }
-
-    public function update(UpdateApplicationRequest $data): Application
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/applications/{$data->applicationId}", $data->toArray()));
-
-        return Application::createFromResponse($response->json());
-    }
-
-    public function delete(string $applicationId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/applications/{$applicationId}"));
-    }
-
-    public function uploadAvatar(string $applicationId, string $filePath): Application
-    {
-        $request = new MultipartRequest(
-            "/applications/{$applicationId}/avatar",
-            [['name' => 'avatar', 'contents' => fopen($filePath, 'r'), 'filename' => basename($filePath)]]
-        );
-        $response = $this->send($request);
-
-        return Application::createFromResponse($response->json());
+        $this->client->delete("/applications/{$id}/avatar");
     }
 }

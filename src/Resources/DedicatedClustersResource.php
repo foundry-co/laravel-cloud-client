@@ -2,17 +2,18 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
 use FoundryCo\LaravelCloudClient\Data\DedicatedCluster;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
 use Illuminate\Support\Collection;
 
+/**
+ * @method Collection<int, DedicatedCluster> list(?string $region = null, ?string $type = null, ?string $status = null)
+ */
 class DedicatedClustersResource extends Resource
 {
-    public function list(): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest('/dedicated-servers'),
-            fn ($item) => DedicatedCluster::createFromResponse($item)
-        );
-    }
+    use ListsRecords;
+
+    protected string $model = DedicatedCluster::class;
+
+    protected string $collection = '/dedicated-clusters';
 }

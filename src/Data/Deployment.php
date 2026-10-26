@@ -4,28 +4,29 @@ namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
 use FoundryCo\LaravelCloudClient\Enums\DeploymentStatus;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Resources\DeploymentsResource;
 
-class Deployment implements Arrayable, Jsonable
+class Deployment extends Model
 {
+    protected static string $resource = DeploymentsResource::class;
+
     public function __construct(
         public readonly string $id,
-        public readonly DeploymentStatus $status,
-        public readonly ?string $commitHash,
-        public readonly ?string $commitMessage,
-        public readonly ?string $commitAuthor,
-        public readonly ?CarbonImmutable $startedAt,
-        public readonly ?CarbonImmutable $finishedAt,
-        public readonly ?CarbonImmutable $createdAt,
-        public readonly ?CarbonImmutable $updatedAt,
-        public readonly ?string $failureReason,
+        public readonly string $slug,
+        public readonly ?DeploymentStatus $status,
         public readonly string $branchName,
+        public readonly string $commitHash,
+        public readonly string $commitMessage,
+        public readonly ?string $commitAuthor,
+        public readonly ?string $failureReason,
         public readonly string $phpMajorVersion,
         public readonly ?string $buildCommand,
-        public readonly ?string $nodeVersion,
+        public readonly string $nodeVersion,
         public readonly bool $usesOctane,
         public readonly bool $usesHibernation,
+        public readonly ?int $hibernationWakeUpInterval,
+        public readonly ?CarbonImmutable $startedAt,
+        public readonly ?CarbonImmutable $finishedAt,
         public readonly ?string $environmentId,
         public readonly ?string $initiatorId,
     ) {}
@@ -38,21 +39,21 @@ class Deployment implements Arrayable, Jsonable
 
         return new static(
             id: $data['id'] ?? '',
-            status: DeploymentStatus::from($attrs['status'] ?? 'pending'),
-            commitHash: $attrs['commit_hash'] ?? null,
-            commitMessage: $attrs['commit_message'] ?? null,
-            commitAuthor: $attrs['commit_author'] ?? null,
-            startedAt: isset($attrs['started_at']) ? CarbonImmutable::parse($attrs['started_at']) : null,
-            finishedAt: isset($attrs['finished_at']) ? CarbonImmutable::parse($attrs['finished_at']) : null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            updatedAt: isset($attrs['updated_at']) ? CarbonImmutable::parse($attrs['updated_at']) : null,
-            failureReason: $attrs['failure_reason'] ?? null,
+            slug: $attrs['slug'] ?? '',
+            status: DeploymentStatus::tryFrom($attrs['status'] ?? ''),
             branchName: $attrs['branch_name'] ?? '',
+            commitHash: $attrs['commit_hash'] ?? '',
+            commitMessage: $attrs['commit_message'] ?? '',
+            commitAuthor: $attrs['commit_author'] ?? null,
+            failureReason: $attrs['failure_reason'] ?? null,
             phpMajorVersion: $attrs['php_major_version'] ?? '',
             buildCommand: $attrs['build_command'] ?? null,
-            nodeVersion: $attrs['node_version'] ?? null,
+            nodeVersion: $attrs['node_version'] ?? '',
             usesOctane: (bool) ($attrs['uses_octane'] ?? false),
             usesHibernation: (bool) ($attrs['uses_hibernation'] ?? false),
+            hibernationWakeUpInterval: isset($attrs['hibernation_wake_up_interval']) ? (int) $attrs['hibernation_wake_up_interval'] : null,
+            startedAt: isset($attrs['started_at']) ? CarbonImmutable::parse($attrs['started_at']) : null,
+            finishedAt: isset($attrs['finished_at']) ? CarbonImmutable::parse($attrs['finished_at']) : null,
             environmentId: $relationships['environment']['data']['id'] ?? null,
             initiatorId: $relationships['initiator']['data']['id'] ?? null,
         );
@@ -103,28 +104,28 @@ class Deployment implements Arrayable, Jsonable
     {
         return [
             'id' => $this->id,
-            'status' => $this->status->value,
+            'slug' => $this->slug,
+            'status' => $this->status?->value,
+            'branch_name' => $this->branchName,
             'commit_hash' => $this->commitHash,
             'commit_message' => $this->commitMessage,
             'commit_author' => $this->commitAuthor,
-            'started_at' => $this->startedAt?->toIso8601String(),
-            'finished_at' => $this->finishedAt?->toIso8601String(),
-            'created_at' => $this->createdAt?->toIso8601String(),
-            'updated_at' => $this->updatedAt?->toIso8601String(),
             'failure_reason' => $this->failureReason,
-            'branch_name' => $this->branchName,
             'php_major_version' => $this->phpMajorVersion,
             'build_command' => $this->buildCommand,
             'node_version' => $this->nodeVersion,
             'uses_octane' => $this->usesOctane,
             'uses_hibernation' => $this->usesHibernation,
+            'hibernation_wake_up_interval' => $this->hibernationWakeUpInterval,
+            'started_at' => $this->startedAt?->toIso8601String(),
+            'finished_at' => $this->finishedAt?->toIso8601String(),
             'environment_id' => $this->environmentId,
             'initiator_id' => $this->initiatorId,
         ];
     }
 
-    public function toJson($options = 0): string
+    public function logs(): array
     {
-        return json_encode($this->toArray(), $options);
+        return $this->resource()->logs($this->id);
     }
 }

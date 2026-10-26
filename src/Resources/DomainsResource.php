@@ -2,58 +2,35 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\Domain;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateDomainRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateDomainRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Domain> list(?string $name = null, ?string $hostnameStatus = null, ?string $sslStatus = null, ?string $originStatus = null)
+ * @method Domain find(string $id)
+ * @method Domain create(string $name, mixed $wwwRedirect = null, ?bool $wildcardEnabled = null, ?bool $allowDowntime = null, mixed $cloudflareStrategy = null, mixed $verificationMethod = null)
+ * @method Domain update(string $id, string $verificationMethod)
+ * @method void delete(string $id)
+ */
 class DomainsResource extends Resource
 {
-    public function list(string $environmentId, ?string $name = null, ?string $hostnameStatus = null, ?string $sslStatus = null): Collection
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
+
+    protected string $model = Domain::class;
+
+    protected string $collection = '/environments/{parent}/domains';
+
+    protected string $item = '/domains/{id}';
+
+    protected array $creating = ['name'];
+
+    public function verify(string $id): Domain
     {
-        return $this->paginateAll(
-            new GetRequest("/environments/{$environmentId}/domains", array_filter([
-                'filter[name]' => $name,
-                'filter[hostname_status]' => $hostnameStatus,
-                'filter[ssl_status]' => $sslStatus,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => Domain::createFromResponse($item)
-        );
-    }
-
-    public function get(string $domainId): Domain
-    {
-        $response = $this->send(new GetRequest("/domains/{$domainId}"));
-
-        return Domain::createFromResponse($response->json());
-    }
-
-    public function create(CreateDomainRequest $data): Domain
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/environments/{$data->environmentId}/domains", $data->toArray()));
-
-        return Domain::createFromResponse($response->json());
-    }
-
-    public function update(UpdateDomainRequest $data): Domain
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/domains/{$data->domainId}", $data->toArray()));
-
-        return Domain::createFromResponse($response->json());
-    }
-
-    public function delete(string $domainId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/domains/{$domainId}"));
-    }
-
-    public function verify(string $domainId): Domain
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/domains/{$domainId}/verify"));
-
-        return Domain::createFromResponse($response->json());
+        return $this->hydrate($this->client->post("/domains/{$id}/verify"));
     }
 }

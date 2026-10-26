@@ -2,39 +2,28 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
 use FoundryCo\LaravelCloudClient\Data\Database;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Database> list()
+ * @method Database find(string $id)
+ * @method Database create(string $name)
+ * @method void delete(string $id)
+ */
 class DatabasesResource extends Resource
 {
-    public function list(string $clusterId): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest("/databases/{$clusterId}/databases"),
-            fn ($item) => Database::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords;
 
-    public function get(string $clusterId, string $databaseId): Database
-    {
-        $response = $this->send(new GetRequest("/databases/{$clusterId}/databases/{$databaseId}"));
+    protected string $model = Database::class;
 
-        return Database::createFromResponse($response->json());
-    }
+    protected string $collection = '/databases/clusters/{parent}/databases';
 
-    public function create(CreateDatabaseRequest $data): Database
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/databases/{$data->clusterId}/databases", $data->toArray()));
+    protected string $item = '/databases/clusters/{parent}/databases/{id}';
 
-        return Database::createFromResponse($response->json());
-    }
-
-    public function delete(string $clusterId, string $databaseId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/databases/{$clusterId}/databases/{$databaseId}"));
-    }
+    protected array $creating = ['name'];
 }

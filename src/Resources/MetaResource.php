@@ -4,23 +4,19 @@ namespace FoundryCo\LaravelCloudClient\Resources;
 
 use FoundryCo\LaravelCloudClient\Data\Organization;
 use FoundryCo\LaravelCloudClient\Data\Region;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
 use Illuminate\Support\Collection;
 
 class MetaResource extends Resource
 {
     public function organization(): Organization
     {
-        $response = $this->send(new GetRequest('/organization'));
-
-        return Organization::createFromResponse($response->json());
+        return Organization::createFromResponse($this->client->get('/meta/organization'));
     }
 
     public function regions(): Collection
     {
-        $response = $this->send(new GetRequest('/regions'));
-        $data = $response->json();
+        $body = $this->client->get('/meta/regions');
 
-        return collect($data['data'] ?? $data)->map(fn ($item) => Region::createFromResponse($item));
+        return collect($body['data'] ?? $body)->map(fn ($region) => Region::createFromResponse($region));
     }
 }

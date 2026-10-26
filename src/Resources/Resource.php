@@ -2,67 +2,89 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use BackedEnum;
 use FoundryCo\LaravelCloudClient\CloudClient;
-use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
-use FoundryCo\LaravelCloudClient\Exceptions\CloudApiException;
-use FoundryCo\LaravelCloudClient\Exceptions\NotFoundException;
-use FoundryCo\LaravelCloudClient\Exceptions\ValidationException;
-use FoundryCo\LaravelCloudClient\Http\CloudRequest;
-use Illuminate\Support\Collection;
-use Saloon\Exceptions\Request\RequestException;
-use Saloon\Http\Response;
-use Saloon\PaginationPlugin\Contracts\Paginatable;
+use FoundryCo\LaravelCloudClient\Data\Model;
+use Illuminate\Support\Str;
 
 abstract class Resource
 {
-    public function __construct(protected CloudClient $connector) {}
+    private const VERBS = [
+        'list' => 'listRecords',
+        'find' => 'findRecord',
+        'create' => 'createRecord',
+        'update' => 'updateRecord',
+        'delete' => 'deleteRecord',
+    ];
 
-    protected function send(CloudRequest $request): Response
+    protected string $model;
+
+    protected string $collection;
+
+    protected string $item;
+
+    protected array $creating = [];
+
+    protected array $defaults = [];
+
+    public function __construct(
+        protected CloudClient $client,
+        protected ?string $parent = null,
+    ) {}
+
+    public function __call(string $method, array $arguments): mixed
     {
-        try {
-            return $this->connector->send($request);
-        } catch (RequestException $e) {
-            throw $this->mapException($e);
+        $handler = self::VERBS[$method] ?? null;
+
+        if ($handler === null || ! method_exists($this, $handler)) {
+            throw new \BadMethodCallException(static::class."::{$method}() does not exist.");
         }
+
+        return $this->{$handler}(...$arguments);
     }
 
-    protected function paginateAll(CloudRequest $request, callable $transform): Collection
+    protected function hydrate(array $payload): Model
     {
-        if (! $request instanceof Paginatable) {
-            throw new \InvalidArgumentException('Request must implement Paginatable to use paginateAll.');
-        }
-
-        $paginator = $this->connector->paginate($request);
-        $items = collect();
-
-        try {
-            foreach ($paginator as $response) {
-                $data = $response->json();
-                $pageItems = collect($data['data'] ?? [])->map(fn ($item) => $transform([
-                    'data' => $item,
-                    'included' => $data['included'] ?? [],
-                ]));
-                $items = $items->merge($pageItems);
-            }
-        } catch (RequestException $e) {
-            throw $this->mapException($e);
-        }
-
-        return $items;
+        return $this->model::createFromResponse($payload)->attach($this->client, $this->parent);
     }
 
-    private function mapException(RequestException $e): \Throwable
+    protected function path(string $template, ?string $id = null): string
     {
-        $response = $e->getResponse();
-        $body = $response->json() ?? [];
-        $message = $body['message'] ?? $e->getMessage();
-        $errors = $body['errors'] ?? [];
+        if ($this->parent === null && str_contains($template, '{parent}')) {
+            throw new \LogicException(static::class.' must be scoped to its parent.');
+        }
 
-        return match (true) {
-            $response->status() === 401 => new AuthenticationException($message),
-            $response->status() === 404 => new NotFoundException($message),
-            $response->status() === 422 => new ValidationException($message, $errors),
-            default => new CloudApiException($message),
-        };
+        return str_replace(['{parent}', '{id}'], [$this->parent, $id], $template);
+    }
+
+    protected function attributes(array $input): array
+    {
+        $attributes = [];
+
+        foreach ($input as $key => $value) {
+            $name = is_int($key)
+                ? ($this->creating[$key] ?? throw new \InvalidArgumentException('Unexpected positional argument.'))
+                : Str::snake($key);
+
+            $attributes[$name] = $value instanceof BackedEnum ? $value->value : $value;
+        }
+
+        return $this->withoutNulls($attributes);
+    }
+
+    protected function filters(array $filters): array
+    {
+        $query = [];
+
+        foreach ($filters as $key => $value) {
+            $query['filter['.Str::snake($key).']'] = $value instanceof BackedEnum ? $value->value : $value;
+        }
+
+        return $this->withoutNulls($query);
+    }
+
+    protected function withoutNulls(array $values): array
+    {
+        return array_filter($values, fn ($value) => $value !== null);
     }
 }

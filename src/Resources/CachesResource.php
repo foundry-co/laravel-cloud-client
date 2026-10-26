@@ -2,65 +2,42 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\Cache;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateCacheRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateCacheRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Cache> list(?string $type = null, ?string $region = null, ?string $status = null)
+ * @method Cache find(string $id)
+ * @method Cache create(string $type, string $name, string $region, string $size, bool $autoUpgradeEnabled = true, bool $isPublic = false, ?string $clusterId = null, mixed $evictionPolicy = null, ?bool $usesHibernation = null, mixed $hibernationTimeout = null)
+ * @method Cache update(string $id, ?string $name = null, ?string $size = null, ?bool $autoUpgradeEnabled = null, ?bool $isPublic = null, mixed $evictionPolicy = null, ?bool $usesHibernation = null, mixed $hibernationTimeout = null)
+ * @method void delete(string $id)
+ */
 class CachesResource extends Resource
 {
-    public function list(?string $type = null, ?string $region = null, ?string $status = null): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest('/caches', array_filter([
-                'filter[type]' => $type,
-                'filter[region]' => $region,
-                'filter[status]' => $status,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => Cache::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
 
-    public function get(string $cacheId): Cache
-    {
-        $response = $this->send(new GetRequest("/caches/{$cacheId}"));
+    protected string $model = Cache::class;
 
-        return Cache::createFromResponse($response->json());
-    }
+    protected string $collection = '/caches';
 
-    public function create(CreateCacheRequest $data): Cache
-    {
-        $response = $this->send(new JsonRequest(Method::POST, '/caches', $data->toArray()));
+    protected string $item = '/caches/{id}';
 
-        return Cache::createFromResponse($response->json());
-    }
+    protected array $creating = ['type', 'name', 'region', 'size'];
 
-    public function update(UpdateCacheRequest $data): Cache
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/caches/{$data->cacheId}", $data->toArray()));
-
-        return Cache::createFromResponse($response->json());
-    }
-
-    public function delete(string $cacheId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/caches/{$cacheId}"));
-    }
+    protected array $defaults = ['auto_upgrade_enabled' => true, 'is_public' => false];
 
     public function types(): array
     {
-        $response = $this->send(new GetRequest('/caches/types'));
-
-        return $response->json();
+        return $this->client->get('/caches/types')['data'] ?? [];
     }
 
-    public function metrics(string $cacheId, ?string $period = null): array
+    public function metrics(string $id, ?string $period = null): array
     {
-        $response = $this->send(new GetRequest("/caches/{$cacheId}/metrics", array_filter(['period' => $period], fn ($v) => $v !== null)));
-
-        return $response->json();
+        return $this->client->get("/caches/{$id}/metrics", $this->withoutNulls(['period' => $period]));
     }
 }

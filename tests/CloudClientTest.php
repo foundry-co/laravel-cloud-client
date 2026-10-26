@@ -1,138 +1,88 @@
 <?php
 
 use FoundryCo\LaravelCloudClient\CloudClient;
+use FoundryCo\LaravelCloudClient\Data\Application;
+use FoundryCo\LaravelCloudClient\Exceptions\AuthenticationException;
+use FoundryCo\LaravelCloudClient\Exceptions\CloudApiException;
+use FoundryCo\LaravelCloudClient\Exceptions\NotFoundException;
+use FoundryCo\LaravelCloudClient\Exceptions\ValidationException;
 use FoundryCo\LaravelCloudClient\Facades\Cloud;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Resources\ApplicationsResource;
-use FoundryCo\LaravelCloudClient\Resources\BackgroundProcessesResource;
-use FoundryCo\LaravelCloudClient\Resources\BucketKeysResource;
-use FoundryCo\LaravelCloudClient\Resources\CachesResource;
-use FoundryCo\LaravelCloudClient\Resources\CommandsResource;
-use FoundryCo\LaravelCloudClient\Resources\DatabaseClustersResource;
-use FoundryCo\LaravelCloudClient\Resources\DatabaseSnapshotsResource;
-use FoundryCo\LaravelCloudClient\Resources\DedicatedClustersResource;
-use FoundryCo\LaravelCloudClient\Resources\DeploymentsResource;
 use FoundryCo\LaravelCloudClient\Resources\DomainsResource;
-use FoundryCo\LaravelCloudClient\Resources\EnvironmentsResource;
-use FoundryCo\LaravelCloudClient\Resources\InstancesResource;
-use FoundryCo\LaravelCloudClient\Resources\MetaResource;
-use FoundryCo\LaravelCloudClient\Resources\ObjectStorageBucketsResource;
-use FoundryCo\LaravelCloudClient\Resources\UsageResource;
-use FoundryCo\LaravelCloudClient\Resources\WebSocketApplicationsResource;
-use FoundryCo\LaravelCloudClient\Resources\WebSocketClustersResource;
-use Saloon\Http\Faking\MockClient;
-use Saloon\Http\Faking\MockResponse;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 
-it('resolves from the container', function () {
-    expect(app(CloudClient::class))->toBeInstanceOf(CloudClient::class);
+it('resolves from the container, alias and facade', function () {
+    expect(app(CloudClient::class))->toBeInstanceOf(CloudClient::class)
+        ->and(app('cloud'))->toBe(app(CloudClient::class))
+        ->and(Cloud::getFacadeRoot())->toBe(app(CloudClient::class));
 });
 
-it('resolves via the cloud alias', function () {
-    expect(app('cloud'))->toBeInstanceOf(CloudClient::class);
+it('sends the bearer token and JSON:API headers', function () {
+    fakeCloud(['/applications/app-1' => ['data' => payload('app-1')]]);
+
+    Cloud::applications()->find('app-1');
+
+    Http::assertSent(fn (Request $request) => $request->hasHeader('Authorization', 'Bearer test-token')
+        && $request->hasHeader('Accept', 'application/vnd.api+json'));
 });
 
-it('resolves via the facade', function () {
-    expect(Cloud::getFacadeRoot())->toBeInstanceOf(CloudClient::class);
+it('sends write requests as JSON', function () {
+    fakeCloud(['/applications' => ['data' => payload('app-1')]]);
+
+    Cloud::applications()->create(repository: 'org/repo', name: 'App', region: 'us-east-1');
+
+    assertCloudSent('POST', '/applications', fn (Request $request) => $request->hasHeader('Content-Type', 'application/json')
+        && $request->data() === ['repository' => 'org/repo', 'name' => 'App', 'region' => 'us-east-1']);
 });
 
-it('returns an ApplicationsResource', function () {
-    expect(app(CloudClient::class)->applications())->toBeInstanceOf(ApplicationsResource::class);
+it('auto-paginates until there is no next link', function () {
+    Http::fakeSequence('cloud.laravel.com/api/applications*')
+        ->push(['data' => [payload('app-1')], 'links' => ['next' => 'page-2']])
+        ->push(['data' => [payload('app-2')], 'links' => ['next' => null]]);
+
+    $applications = Cloud::applications()->list();
+
+    expect($applications)->toHaveCount(2)
+        ->and($applications->first())->toBeInstanceOf(Application::class)
+        ->and($applications->pluck('id')->all())->toBe(['app-1', 'app-2']);
+
+    Http::assertSentCount(2);
 });
 
-it('returns an EnvironmentsResource', function () {
-    expect(app(CloudClient::class)->environments())->toBeInstanceOf(EnvironmentsResource::class);
+it('turns named arguments into filters', function () {
+    fakeCloud(['/environments/env-1/domains*' => ['data' => [], 'links' => ['next' => null]]]);
+
+    Cloud::domains('env-1')->list(hostnameStatus: 'active', name: null);
+
+    Http::assertSent(fn (Request $request) => str_contains(urldecode($request->url()), 'filter[hostname_status]=active')
+        && ! str_contains($request->url(), 'filter%5Bname'));
 });
 
-it('returns a DeploymentsResource', function () {
-    expect(app(CloudClient::class)->deployments())->toBeInstanceOf(DeploymentsResource::class);
+it('requires a parent for scoped resources', function () {
+    Cloud::domains()->list();
+})->throws(LogicException::class);
+
+it('scopes resources to a parent', function () {
+    expect(Cloud::domains('env-1'))->toBeInstanceOf(DomainsResource::class);
 });
 
-it('returns a DomainsResource', function () {
-    expect(app(CloudClient::class)->domains())->toBeInstanceOf(DomainsResource::class);
-});
+it('maps error responses to exceptions', function (int $status, string $exception) {
+    fakeCloud(['/applications/app-1' => ['__status' => $status, 'body' => ['message' => 'Nope.', 'errors' => ['name' => ['Required.']]]]]);
 
-it('returns an InstancesResource', function () {
-    expect(app(CloudClient::class)->instances())->toBeInstanceOf(InstancesResource::class);
-});
+    Cloud::applications()->find('app-1');
+})->with([
+    [401, AuthenticationException::class],
+    [404, NotFoundException::class],
+    [422, ValidationException::class],
+    [500, CloudApiException::class],
+])->throws(CloudApiException::class);
 
-it('returns a BackgroundProcessesResource', function () {
-    expect(app(CloudClient::class)->backgroundProcesses())->toBeInstanceOf(BackgroundProcessesResource::class);
-});
+it('exposes validation errors', function () {
+    fakeCloud(['/applications' => ['__status' => 422, 'body' => ['message' => 'Invalid.', 'errors' => ['name' => ['Required.']]]]]);
 
-it('returns a CommandsResource', function () {
-    expect(app(CloudClient::class)->commands())->toBeInstanceOf(CommandsResource::class);
-});
-
-it('returns a DatabaseClustersResource', function () {
-    expect(app(CloudClient::class)->databaseClusters())->toBeInstanceOf(DatabaseClustersResource::class);
-});
-
-it('returns a DatabaseSnapshotsResource', function () {
-    expect(app(CloudClient::class)->databaseSnapshots())->toBeInstanceOf(DatabaseSnapshotsResource::class);
-});
-
-it('returns a CachesResource', function () {
-    expect(app(CloudClient::class)->caches())->toBeInstanceOf(CachesResource::class);
-});
-
-it('returns an ObjectStorageBucketsResource', function () {
-    expect(app(CloudClient::class)->objectStorageBuckets())->toBeInstanceOf(ObjectStorageBucketsResource::class);
-});
-
-it('returns a BucketKeysResource', function () {
-    expect(app(CloudClient::class)->bucketKeys())->toBeInstanceOf(BucketKeysResource::class);
-});
-
-it('returns a WebSocketClustersResource', function () {
-    expect(app(CloudClient::class)->websocketClusters())->toBeInstanceOf(WebSocketClustersResource::class);
-});
-
-it('returns a WebSocketApplicationsResource', function () {
-    expect(app(CloudClient::class)->websocketApplications())->toBeInstanceOf(WebSocketApplicationsResource::class);
-});
-
-it('returns a DedicatedClustersResource', function () {
-    expect(app(CloudClient::class)->dedicatedClusters())->toBeInstanceOf(DedicatedClustersResource::class);
-});
-
-it('returns a MetaResource', function () {
-    expect(app(CloudClient::class)->meta())->toBeInstanceOf(MetaResource::class);
-});
-
-it('returns a UsageResource', function () {
-    expect(app(CloudClient::class)->usage())->toBeInstanceOf(UsageResource::class);
-});
-
-it('sends bearer token in requests', function () {
-    $mockClient = new MockClient([
-        GetRequest::class => MockResponse::make(['data' => [], 'links' => ['next' => null]], 200),
-    ]);
-
-    $client = app(CloudClient::class);
-    $client->withMockClient($mockClient);
-
-    $client->applications()->list();
-
-    $mockClient->assertSent(function ($request, $response) {
-        $headers = $response->getPendingRequest()->headers()->all();
-
-        return isset($headers['Authorization']) && $headers['Authorization'] === 'Bearer test-token';
-    });
-});
-
-it('sends accept header for json api', function () {
-    $mockClient = new MockClient([
-        GetRequest::class => MockResponse::make(['data' => [], 'links' => ['next' => null]], 200),
-    ]);
-
-    $client = app(CloudClient::class);
-    $client->withMockClient($mockClient);
-
-    $client->applications()->list();
-
-    $mockClient->assertSent(function ($request, $response) {
-        $headers = $response->getPendingRequest()->headers()->all();
-
-        return isset($headers['Accept']) && $headers['Accept'] === 'application/vnd.api+json';
-    });
+    try {
+        Cloud::applications()->create(name: 'x');
+    } catch (ValidationException $e) {
+        expect($e->errors)->toBe(['name' => ['Required.']])->and($e->getMessage())->toBe('Invalid.');
+    }
 });

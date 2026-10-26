@@ -3,32 +3,40 @@
 namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesItself;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesItself;
+use FoundryCo\LaravelCloudClient\Resources\BucketKeysResource;
 
-class BucketKey implements Arrayable, Jsonable
+class BucketKey extends Model
 {
+    use DeletesItself, UpdatesItself;
+
+    protected static string $resource = BucketKeysResource::class;
+
     public function __construct(
         public readonly string $id,
         public readonly string $name,
         public readonly string $permission,
-        public readonly ?CarbonImmutable $createdAt,
         public readonly ?string $accessKeyId,
-        public readonly ?string $secretAccessKey,
+        public readonly ?string $accessKeySecret,
+        public readonly ?CarbonImmutable $createdAt,
+        public readonly ?string $filesystemId,
     ) {}
 
     public static function createFromResponse(array $response): static
     {
         $data = $response['data'] ?? $response;
         $attrs = $data['attributes'] ?? [];
+        $relationships = $data['relationships'] ?? [];
 
         return new static(
             id: $data['id'] ?? '',
             name: $attrs['name'] ?? '',
             permission: $attrs['permission'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
             accessKeyId: $attrs['access_key_id'] ?? null,
-            secretAccessKey: $attrs['secret_access_key'] ?? null,
+            accessKeySecret: $attrs['access_key_secret'] ?? null,
+            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
+            filesystemId: $relationships['filesystem']['data']['id'] ?? null,
         );
     }
 
@@ -38,14 +46,10 @@ class BucketKey implements Arrayable, Jsonable
             'id' => $this->id,
             'name' => $this->name,
             'permission' => $this->permission,
-            'created_at' => $this->createdAt?->toIso8601String(),
             'access_key_id' => $this->accessKeyId,
-            'secret_access_key' => $this->secretAccessKey,
+            'access_key_secret' => $this->accessKeySecret,
+            'created_at' => $this->createdAt?->toIso8601String(),
+            'filesystem_id' => $this->filesystemId,
         ];
-    }
-
-    public function toJson($options = 0): string
-    {
-        return json_encode($this->toArray(), $options);
     }
 }

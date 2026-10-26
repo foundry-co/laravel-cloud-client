@@ -3,22 +3,30 @@
 namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesItself;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesItself;
+use FoundryCo\LaravelCloudClient\Resources\DatabaseClustersResource;
+use FoundryCo\LaravelCloudClient\Resources\DatabaseSnapshotsResource;
+use FoundryCo\LaravelCloudClient\Resources\DatabasesResource;
 
-class DatabaseCluster implements Arrayable, Jsonable
+class DatabaseCluster extends Model
 {
+    use DeletesItself, UpdatesItself;
+
+    protected static string $resource = DatabaseClustersResource::class;
+
     public function __construct(
         public readonly string $id,
         public readonly string $name,
         public readonly string $type,
         public readonly string $status,
         public readonly string $region,
-        public readonly array $config,
-        public readonly array $connection,
         public readonly ?CarbonImmutable $createdAt,
-        public readonly ?CarbonImmutable $updatedAt,
-        public readonly array $schemas,
+        public readonly mixed $config,
+        public readonly string $supportsPitr,
+        public readonly ?string $earliestRestoreTime,
+        public readonly array $connection,
+        public readonly array $databasesIds,
     ) {}
 
     public static function createFromResponse(array $response): static
@@ -33,11 +41,12 @@ class DatabaseCluster implements Arrayable, Jsonable
             type: $attrs['type'] ?? '',
             status: $attrs['status'] ?? '',
             region: $attrs['region'] ?? '',
-            config: $attrs['config'] ?? [],
-            connection: $attrs['connection'] ?? [],
             createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            updatedAt: isset($attrs['updated_at']) ? CarbonImmutable::parse($attrs['updated_at']) : null,
-            schemas: collect($relationships['databases']['data'] ?? [])->pluck('id')->all(),
+            config: $attrs['config'] ?? null,
+            supportsPitr: $attrs['supports_pitr'] ?? '',
+            earliestRestoreTime: $attrs['earliest_restore_time'] ?? null,
+            connection: $attrs['connection'] ?? [],
+            databasesIds: collect($relationships['databases']['data'] ?? [])->pluck('id')->all(),
         );
     }
 
@@ -49,16 +58,37 @@ class DatabaseCluster implements Arrayable, Jsonable
             'type' => $this->type,
             'status' => $this->status,
             'region' => $this->region,
-            'config' => $this->config,
-            'connection' => $this->connection,
             'created_at' => $this->createdAt?->toIso8601String(),
-            'updated_at' => $this->updatedAt?->toIso8601String(),
-            'schemas' => $this->schemas,
+            'config' => $this->config,
+            'supports_pitr' => $this->supportsPitr,
+            'earliest_restore_time' => $this->earliestRestoreTime,
+            'connection' => $this->connection,
+            'databases_ids' => $this->databasesIds,
         ];
     }
 
-    public function toJson($options = 0): string
+    public function snapshots(): DatabaseSnapshotsResource
     {
-        return json_encode($this->toArray(), $options);
+        return $this->children(DatabaseSnapshotsResource::class);
+    }
+
+    public function databases(): DatabasesResource
+    {
+        return $this->children(DatabasesResource::class);
+    }
+
+    public function snapshot(string $name, ?string $description = null): DatabaseSnapshot
+    {
+        return $this->snapshots()->create(name: $name, description: $description);
+    }
+
+    public function metrics(?string $period = null): array
+    {
+        return $this->resource()->metrics($this->id, $period);
+    }
+
+    public function restore(string $name, ?string $snapshotId = null, ?string $restoreTime = null): array
+    {
+        return $this->resource()->restore($this->id, $name, $snapshotId, $restoreTime);
     }
 }

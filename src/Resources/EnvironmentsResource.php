@@ -2,100 +2,135 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
+use FoundryCo\LaravelCloudClient\Data\Deployment;
 use FoundryCo\LaravelCloudClient\Data\Environment;
 use FoundryCo\LaravelCloudClient\Data\EnvironmentLog;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\AddEnvironmentVariablesRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateEnvironmentRequest;
-use FoundryCo\LaravelCloudClient\Requests\ReplaceEnvironmentVariablesRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateEnvironmentRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Environment> list(?string $name = null, ?string $status = null, ?string $slug = null)
+ * @method Environment find(string $id)
+ * @method Environment create(string $name, string $branch, ?string $buildCommand = null, ?string $clusterId = null, ?string $edgeNetworkId = null)
+ * @method Environment update(string $id, ?array $serving = null, ?string $name = null, ?string $slug = null, ?string $color = null, ?string $branch = null, ?bool $usesPushToDeploy = null, ?bool $usesDeployHook = null, ?int $timeout = null, ?string $phpVersion = null, ?string $buildCommand = null, ?string $nodeVersion = null, ?string $deployCommand = null, ?string $startCommand = null, ?bool $usesVanityDomain = null, ?string $databaseSchemaId = null, ?string $cacheId = null, ?string $websocketApplicationId = null, ?array $filesystemKeys = null, ?bool $usesOctane = null, ?int $sleepTimeout = null, ?int $hibernationWakeUpInterval = null, ?int $shutdownTimeout = null, ?bool $usesPurgeEdgeCacheOnDeploy = null, ?string $nightwatchToken = null, ?string $cacheStrategy = null, ?string $responseHeadersFrame = null, ?string $responseHeadersContentType = null, ?string $responseHeadersRobotsTag = null, ?array $responseHeadersHsts = null, ?bool $firewallBlockPath = null, ?bool $firewallBrowserIntegrityCheck = null)
+ * @method void delete(string $id)
+ */
 class EnvironmentsResource extends Resource
 {
-    public function list(string $applicationId, ?string $name = null, ?string $status = null, ?string $slug = null): Collection
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
+
+    protected string $model = Environment::class;
+
+    protected string $collection = '/applications/{parent}/environments';
+
+    protected string $item = '/environments/{id}';
+
+    protected array $creating = ['name', 'branch'];
+
+    public function logs(string $id, string $from, string $to, ?string $cursor = null, ?string $type = null, ?string $query = null, ?bool $caseSensitive = null, ?bool $wholeWord = null, ?array $instances = null): Collection
     {
-        return $this->paginateAll(
-            new GetRequest("/applications/{$applicationId}/environments", array_filter([
-                'filter[name]' => $name,
-                'filter[status]' => $status,
-                'filter[slug]' => $slug,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => Environment::createFromResponse($item)
-        );
-    }
-
-    public function get(string $environmentId): Environment
-    {
-        $response = $this->send(new GetRequest("/environments/{$environmentId}"));
-
-        return Environment::createFromResponse($response->json());
-    }
-
-    public function create(CreateEnvironmentRequest $data): Environment
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/applications/{$data->applicationId}/environments", $data->toArray()));
-
-        return Environment::createFromResponse($response->json());
-    }
-
-    public function update(UpdateEnvironmentRequest $data): Environment
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/environments/{$data->environmentId}", $data->toArray()));
-
-        return Environment::createFromResponse($response->json());
-    }
-
-    public function delete(string $environmentId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/environments/{$environmentId}"));
-    }
-
-    public function logs(string $environmentId, string $from, string $to, ?string $cursor = null, ?string $type = null, ?string $query = null): Collection
-    {
-        $response = $this->send(new GetRequest("/environments/{$environmentId}/logs", array_filter([
+        $body = $this->client->get("/environments/{$id}/logs", $this->withoutNulls([
             'from' => $from,
             'to' => $to,
             'cursor' => $cursor,
             'type' => $type,
             'query' => $query,
-        ], fn ($v) => $v !== null)));
-        $data = $response->json();
+            'case_sensitive' => $caseSensitive,
+            'whole_word' => $wholeWord,
+            'instances' => $instances,
+        ]));
 
-        return collect($data['data'] ?? $data)->map(fn ($item) => EnvironmentLog::createFromResponse($item));
+        return collect($body['data'] ?? [])->map(fn ($log) => EnvironmentLog::createFromResponse($log));
     }
 
-    public function addVariables(AddEnvironmentVariablesRequest $data): void
+    public function addVariables(string $id, array $variables): Environment
     {
-        $this->send(new JsonRequest(Method::POST, "/environments/{$data->environmentId}/variables", $data->toArray()));
+        return $this->changeVariables($id, 'append', $variables);
     }
 
-    public function replaceVariables(ReplaceEnvironmentVariablesRequest $data): void
+    public function replaceVariables(string $id, array $variables): Environment
     {
-        $this->send(new JsonRequest(Method::PUT, "/environments/{$data->environmentId}/variables", $data->toArray()));
+        return $this->changeVariables($id, 'set', $variables);
     }
 
-    public function start(string $environmentId): void
+    public function deleteVariables(string $id, array $keys): Environment
     {
-        $this->send(new JsonRequest(Method::POST, "/environments/{$environmentId}/start"));
+        return $this->hydrate($this->client->post("/environments/{$id}/variables/delete", ['keys' => array_values($keys)]));
     }
 
-    public function stop(string $environmentId): void
+    public function start(string $id, ?bool $redeploy = null): Deployment
     {
-        $this->send(new JsonRequest(Method::POST, "/environments/{$environmentId}/stop"));
+        return Deployment::createFromResponse(
+            $this->client->post("/environments/{$id}/start", $this->withoutNulls(['redeploy' => $redeploy]))
+        )->attach($this->client, $id);
     }
 
-    public function metrics(string $environmentId, ?string $period = null): array
+    public function stop(string $id): Environment
     {
-        $response = $this->send(new GetRequest("/environments/{$environmentId}/metrics", array_filter(['period' => $period], fn ($v) => $v !== null)));
-
-        return $response->json();
+        return $this->hydrate($this->client->post("/environments/{$id}/stop"));
     }
 
-    public function purgeCache(string $environmentId): void
+    public function purgeEdgeCache(string $id, ?string $path = null, ?string $prefix = null, ?string $tag = null): Environment
     {
-        $this->send(new JsonRequest(Method::POST, "/environments/{$environmentId}/purge-cache"));
+        return $this->hydrate($this->client->post("/environments/{$id}/purge-edge-cache", $this->withoutNulls(compact('path', 'prefix', 'tag'))));
+    }
+
+    public function metrics(string $id, ?string $period = null): array
+    {
+        return $this->client->get("/environments/{$id}/metrics", $this->withoutNulls(['period' => $period]));
+    }
+
+    public function updateVanityDomain(string $id, string $name): Environment
+    {
+        return $this->hydrate($this->client->put("/environments/{$id}/vanity-domain", ['name' => $name]));
+    }
+
+    public function attachSecrets(string $id, array $secrets): Environment
+    {
+        return $this->hydrate($this->client->post("/environments/{$id}/secrets", ['secrets' => array_values($secrets)]));
+    }
+
+    public function detachSecret(string $id, string $secretId): void
+    {
+        $this->client->delete("/environments/{$id}/secrets/{$secretId}");
+    }
+
+    public function attachResend(string $id, string $fromAddress, string $fromName, ?string $keyStrategy = null, ?string $keyName = null, ?string $reuseKeyId = null): Environment
+    {
+        return $this->hydrate($this->client->post("/environments/{$id}/resend", $this->withoutNulls([
+            'from_address' => $fromAddress,
+            'from_name' => $fromName,
+            'key_strategy' => $keyStrategy,
+            'key_name' => $keyName,
+            'reuse_key_id' => $reuseKeyId,
+        ])));
+    }
+
+    public function updateResend(string $id, string $fromAddress, string $fromName): Environment
+    {
+        return $this->hydrate($this->client->patch("/environments/{$id}/resend", ['from_address' => $fromAddress, 'from_name' => $fromName]));
+    }
+
+    public function detachResend(string $id): void
+    {
+        $this->client->delete("/environments/{$id}/resend");
+    }
+
+    public function resendKeys(string $id): array
+    {
+        return $this->client->get("/environments/{$id}/resend/keys")['data'] ?? [];
+    }
+
+    protected function changeVariables(string $id, string $method, array $variables): Environment
+    {
+        $pairs = array_is_list($variables)
+            ? $variables
+            : collect($variables)->map(fn ($value, $key) => ['key' => $key, 'value' => (string) $value])->values()->all();
+
+        return $this->hydrate($this->client->post("/environments/{$id}/variables", ['method' => $method, 'variables' => $pairs]));
     }
 }

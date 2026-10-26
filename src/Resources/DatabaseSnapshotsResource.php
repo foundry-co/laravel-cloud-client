@@ -2,39 +2,28 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
 use FoundryCo\LaravelCloudClient\Data\DatabaseSnapshot;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseSnapshotRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, DatabaseSnapshot> list()
+ * @method DatabaseSnapshot find(string $id)
+ * @method DatabaseSnapshot create(string $name, ?string $description = null)
+ * @method void delete(string $id)
+ */
 class DatabaseSnapshotsResource extends Resource
 {
-    public function list(string $clusterId): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest("/databases/{$clusterId}/snapshots"),
-            fn ($item) => DatabaseSnapshot::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords;
 
-    public function get(string $clusterId, string $snapshotId): DatabaseSnapshot
-    {
-        $response = $this->send(new GetRequest("/snapshots/{$snapshotId}"));
+    protected string $model = DatabaseSnapshot::class;
 
-        return DatabaseSnapshot::createFromResponse($response->json());
-    }
+    protected string $collection = '/databases/clusters/{parent}/snapshots';
 
-    public function create(CreateDatabaseSnapshotRequest $data): DatabaseSnapshot
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/databases/{$data->clusterId}/snapshots", $data->toArray()));
+    protected string $item = '/database-snapshots/{id}';
 
-        return DatabaseSnapshot::createFromResponse($response->json());
-    }
-
-    public function delete(string $clusterId, string $snapshotId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/snapshots/{$snapshotId}"));
-    }
+    protected array $creating = ['name'];
 }

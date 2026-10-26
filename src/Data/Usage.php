@@ -11,29 +11,39 @@ class Usage implements Arrayable, Jsonable
     public function __construct(
         public readonly string $currency,
         public readonly int $period,
-        public readonly int $currentSpendCents,
-        public readonly int $resourcesTotalCostCents,
-        public readonly int $addonsTotalCostCents,
-        public readonly int $applicationCount,
-        public readonly int $applicationsTotalCostCents,
+        public readonly array $availablePeriods,
         public readonly ?CarbonImmutable $lastUpdatedAt,
-        public readonly array $raw,
+        public readonly int $currentSpendCents,
+        public readonly ?array $bandwidth,
+        public readonly ?array $credits,
+        public readonly ?array $alert,
+        public readonly array $resources,
+        public readonly array $addons,
+        public readonly array $applicationTotals,
+        public readonly ?array $environmentUsage,
+        public readonly ?array $privateCloud,
     ) {}
 
     public static function createFromResponse(array $response): static
     {
-        $summary = $response['data']['summary'] ?? $response['summary'] ?? $response;
+        $data = $response['data'] ?? [];
+        $meta = $response['meta'] ?? [];
+        $summary = $data['summary'] ?? [];
 
         return new static(
-            currency: $summary['currency'] ?? 'USD',
-            period: (int) ($summary['period'] ?? 0),
+            currency: $meta['currency'] ?? 'USD',
+            period: (int) ($meta['period'] ?? 0),
+            availablePeriods: $meta['available_periods'] ?? [],
+            lastUpdatedAt: isset($meta['last_updated_at']) ? CarbonImmutable::parse($meta['last_updated_at']) : null,
             currentSpendCents: (int) ($summary['current_spend_cents'] ?? 0),
-            resourcesTotalCostCents: (int) ($summary['resources_total_cost_cents'] ?? 0),
-            addonsTotalCostCents: (int) ($summary['addons_total_cost_cents'] ?? 0),
-            applicationCount: (int) ($summary['application_count'] ?? 0),
-            applicationsTotalCostCents: (int) ($summary['applications_total_cost_cents'] ?? 0),
-            lastUpdatedAt: isset($summary['last_updated_at']) ? CarbonImmutable::parse($summary['last_updated_at']) : null,
-            raw: $response,
+            bandwidth: $summary['bandwidth'] ?? null,
+            credits: $summary['credits'] ?? null,
+            alert: $summary['alert'] ?? null,
+            resources: $data['resources'] ?? [],
+            addons: $data['addons'] ?? [],
+            applicationTotals: $data['application_totals'] ?? [],
+            environmentUsage: $data['environment_usage'] ?? null,
+            privateCloud: $data['private_cloud'] ?? null,
         );
     }
 
@@ -42,12 +52,17 @@ class Usage implements Arrayable, Jsonable
         return [
             'currency' => $this->currency,
             'period' => $this->period,
-            'current_spend_cents' => $this->currentSpendCents,
-            'resources_total_cost_cents' => $this->resourcesTotalCostCents,
-            'addons_total_cost_cents' => $this->addonsTotalCostCents,
-            'application_count' => $this->applicationCount,
-            'applications_total_cost_cents' => $this->applicationsTotalCostCents,
+            'available_periods' => $this->availablePeriods,
             'last_updated_at' => $this->lastUpdatedAt?->toIso8601String(),
+            'current_spend_cents' => $this->currentSpendCents,
+            'bandwidth' => $this->bandwidth,
+            'credits' => $this->credits,
+            'alert' => $this->alert,
+            'resources' => $this->resources,
+            'addons' => $this->addons,
+            'application_totals' => $this->applicationTotals,
+            'environment_usage' => $this->environmentUsage,
+            'private_cloud' => $this->privateCloud,
         ];
     }
 

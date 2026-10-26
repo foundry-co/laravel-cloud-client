@@ -2,65 +2,54 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\DatabaseCluster;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateDatabaseClusterRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateDatabaseClusterRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, DatabaseCluster> list(?string $type = null, ?string $region = null, ?string $status = null)
+ * @method DatabaseCluster find(string $id)
+ * @method DatabaseCluster create(string $type, string $name, string $region, string $version, mixed $config, ?bool $createDefaultDatabase = null, ?string $clusterId = null)
+ * @method DatabaseCluster update(string $id, mixed $config)
+ * @method void delete(string $id)
+ */
 class DatabaseClustersResource extends Resource
 {
-    public function list(?string $type = null, ?string $region = null, ?string $status = null): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest('/databases', array_filter([
-                'filter[type]' => $type,
-                'filter[region]' => $region,
-                'filter[status]' => $status,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => DatabaseCluster::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
 
-    public function get(string $clusterId): DatabaseCluster
-    {
-        $response = $this->send(new GetRequest("/databases/{$clusterId}"));
+    protected string $model = DatabaseCluster::class;
 
-        return DatabaseCluster::createFromResponse($response->json());
-    }
+    protected string $collection = '/databases/clusters';
 
-    public function create(CreateDatabaseClusterRequest $data): DatabaseCluster
-    {
-        $response = $this->send(new JsonRequest(Method::POST, '/databases', $data->toArray()));
+    protected string $item = '/databases/clusters/{id}';
 
-        return DatabaseCluster::createFromResponse($response->json());
-    }
-
-    public function update(UpdateDatabaseClusterRequest $data): DatabaseCluster
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/databases/{$data->clusterId}", $data->toArray()));
-
-        return DatabaseCluster::createFromResponse($response->json());
-    }
-
-    public function delete(string $clusterId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/databases/{$clusterId}"));
-    }
+    protected array $creating = ['type', 'name', 'region', 'version', 'config'];
 
     public function types(): array
     {
-        $response = $this->send(new GetRequest('/databases/types'));
-
-        return $response->json();
+        return $this->client->get('/databases/types')['data'] ?? [];
     }
 
-    public function metrics(string $clusterId, ?string $period = null): array
+    public function presets(string $type, string $region): array
     {
-        $response = $this->send(new GetRequest("/databases/{$clusterId}/metrics", array_filter(['period' => $period], fn ($v) => $v !== null)));
+        return $this->client->get('/databases/presets', compact('type', 'region'))['data'] ?? [];
+    }
 
-        return $response->json();
+    public function metrics(string $id, ?string $period = null): array
+    {
+        return $this->client->get("/databases/clusters/{$id}/metrics", $this->withoutNulls(['period' => $period]));
+    }
+
+    public function restore(string $id, string $name, ?string $snapshotId = null, ?string $restoreTime = null): array
+    {
+        return $this->client->post("/databases/clusters/{$id}/restore", $this->withoutNulls([
+            'name' => $name,
+            'database_snapshot_id' => $snapshotId,
+            'restore_time' => $restoreTime,
+        ]));
     }
 }

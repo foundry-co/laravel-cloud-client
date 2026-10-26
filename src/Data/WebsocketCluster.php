@@ -3,26 +3,32 @@
 namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesItself;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesItself;
 use FoundryCo\LaravelCloudClient\Enums\WebsocketServerConnectionDistributionStrategy;
 use FoundryCo\LaravelCloudClient\Enums\WebsocketServerMaxConnection;
 use FoundryCo\LaravelCloudClient\Enums\WebsocketServerStatus;
 use FoundryCo\LaravelCloudClient\Enums\WebsocketServerType;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Resources\WebSocketApplicationsResource;
+use FoundryCo\LaravelCloudClient\Resources\WebSocketClustersResource;
 
-class WebsocketCluster implements Arrayable, Jsonable
+class WebsocketCluster extends Model
 {
+    use DeletesItself, UpdatesItself;
+
+    protected static string $resource = WebSocketClustersResource::class;
+
     public function __construct(
         public readonly string $id,
         public readonly string $name,
-        public readonly WebsocketServerType $type,
+        public readonly ?WebsocketServerType $type,
         public readonly string $region,
-        public readonly WebsocketServerStatus $status,
-        public readonly WebsocketServerMaxConnection $maxConnections,
-        public readonly WebsocketServerConnectionDistributionStrategy $connectionDistributionStrategy,
+        public readonly ?WebsocketServerStatus $status,
+        public readonly ?WebsocketServerMaxConnection $maxConnections,
+        public readonly ?WebsocketServerConnectionDistributionStrategy $connectionDistributionStrategy,
         public readonly string $hostname,
         public readonly ?CarbonImmutable $createdAt,
-        public readonly array $applicationIds,
+        public readonly array $applicationsIds,
     ) {}
 
     public static function createFromResponse(array $response): static
@@ -34,14 +40,14 @@ class WebsocketCluster implements Arrayable, Jsonable
         return new static(
             id: $data['id'] ?? '',
             name: $attrs['name'] ?? '',
-            type: WebsocketServerType::from($attrs['type'] ?? 'reverb'),
+            type: WebsocketServerType::tryFrom($attrs['type'] ?? ''),
             region: $attrs['region'] ?? '',
-            status: WebsocketServerStatus::from($attrs['status'] ?? 'unknown'),
-            maxConnections: WebsocketServerMaxConnection::from((int) ($attrs['max_connections'] ?? 100)),
-            connectionDistributionStrategy: WebsocketServerConnectionDistributionStrategy::from($attrs['connection_distribution_strategy'] ?? 'evenly'),
+            status: WebsocketServerStatus::tryFrom($attrs['status'] ?? ''),
+            maxConnections: WebsocketServerMaxConnection::tryFrom((int) ($attrs['max_connections'] ?? 0)),
+            connectionDistributionStrategy: WebsocketServerConnectionDistributionStrategy::tryFrom($attrs['connection_distribution_strategy'] ?? ''),
             hostname: $attrs['hostname'] ?? '',
             createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            applicationIds: collect($relationships['applications']['data'] ?? [])->pluck('id')->all(),
+            applicationsIds: collect($relationships['applications']['data'] ?? [])->pluck('id')->all(),
         );
     }
 
@@ -50,19 +56,24 @@ class WebsocketCluster implements Arrayable, Jsonable
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'type' => $this->type->value,
+            'type' => $this->type?->value,
             'region' => $this->region,
-            'status' => $this->status->value,
-            'max_connections' => $this->maxConnections->value,
-            'connection_distribution_strategy' => $this->connectionDistributionStrategy->value,
+            'status' => $this->status?->value,
+            'max_connections' => $this->maxConnections?->value,
+            'connection_distribution_strategy' => $this->connectionDistributionStrategy?->value,
             'hostname' => $this->hostname,
             'created_at' => $this->createdAt?->toIso8601String(),
-            'application_ids' => $this->applicationIds,
+            'applications_ids' => $this->applicationsIds,
         ];
     }
 
-    public function toJson($options = 0): string
+    public function applications(): WebSocketApplicationsResource
     {
-        return json_encode($this->toArray(), $options);
+        return $this->children(WebSocketApplicationsResource::class);
+    }
+
+    public function metrics(?string $period = null): array
+    {
+        return $this->resource()->metrics($this->id, $period);
     }
 }

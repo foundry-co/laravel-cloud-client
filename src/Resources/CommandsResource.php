@@ -2,37 +2,27 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
 use FoundryCo\LaravelCloudClient\Data\Command;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\RunCommandRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, Command> list(?string $status = null, ?string $command = null)
+ * @method Command find(string $id)
+ */
 class CommandsResource extends Resource
 {
-    public function list(string $environmentId, ?string $status = null, ?string $command = null): Collection
+    use FindsRecords, ListsRecords;
+
+    protected string $model = Command::class;
+
+    protected string $collection = '/environments/{parent}/commands';
+
+    protected string $item = '/commands/{id}';
+
+    public function run(string $command): Command
     {
-        return $this->paginateAll(
-            new GetRequest("/environments/{$environmentId}/commands", array_filter([
-                'filter[status]' => $status,
-                'filter[command]' => $command,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => Command::createFromResponse($item)
-        );
-    }
-
-    public function get(string $commandId): Command
-    {
-        $response = $this->send(new GetRequest("/commands/{$commandId}"));
-
-        return Command::createFromResponse($response->json());
-    }
-
-    public function run(RunCommandRequest $data): Command
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/environments/{$data->environmentId}/commands", $data->toArray()));
-
-        return Command::createFromResponse($response->json());
+        return $this->hydrate($this->client->post($this->path('/environments/{parent}/commands'), ['command' => $command]));
     }
 }

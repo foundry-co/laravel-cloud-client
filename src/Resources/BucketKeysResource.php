@@ -2,47 +2,32 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\BucketKey;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateBucketKeyRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateBucketKeyRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, BucketKey> list()
+ * @method BucketKey find(string $id)
+ * @method BucketKey create(string $name, string $permission = 'read_write')
+ * @method BucketKey update(string $id, string $name)
+ * @method void delete(string $id)
+ */
 class BucketKeysResource extends Resource
 {
-    public function list(string $bucketId): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest("/buckets/{$bucketId}/keys"),
-            fn ($item) => BucketKey::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
 
-    public function get(string $keyId): BucketKey
-    {
-        $response = $this->send(new GetRequest("/bucket-keys/{$keyId}"));
+    protected string $model = BucketKey::class;
 
-        return BucketKey::createFromResponse($response->json());
-    }
+    protected string $collection = '/buckets/{parent}/keys';
 
-    public function create(CreateBucketKeyRequest $data): BucketKey
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/buckets/{$data->bucketId}/keys", $data->toArray()));
+    protected string $item = '/bucket-keys/{id}';
 
-        return BucketKey::createFromResponse($response->json());
-    }
+    protected array $creating = ['name'];
 
-    public function update(UpdateBucketKeyRequest $data): BucketKey
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/bucket-keys/{$data->keyId}", $data->toArray()));
-
-        return BucketKey::createFromResponse($response->json());
-    }
-
-    public function delete(string $keyId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/bucket-keys/{$keyId}"));
-    }
+    protected array $defaults = ['permission' => 'read_write'];
 }

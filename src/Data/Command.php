@@ -4,23 +4,26 @@ namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
 use FoundryCo\LaravelCloudClient\Enums\CommandStatus;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Resources\CommandsResource;
 
-class Command implements Arrayable, Jsonable
+class Command extends Model
 {
+    protected static string $resource = CommandsResource::class;
+
     public function __construct(
         public readonly string $id,
         public readonly string $command,
-        public readonly CommandStatus $status,
         public readonly ?string $output,
-        public readonly ?int $exitCode,
+        public readonly bool $outputTruncated,
+        public readonly ?string $outputUrl,
+        public readonly ?CommandStatus $status,
+        public readonly mixed $exitCode,
+        public readonly ?string $failureReason,
         public readonly ?CarbonImmutable $startedAt,
         public readonly ?CarbonImmutable $finishedAt,
         public readonly ?CarbonImmutable $createdAt,
-        public readonly ?CarbonImmutable $updatedAt,
         public readonly ?string $environmentId,
-        public readonly ?string $instanceId,
+        public readonly ?string $deploymentId,
         public readonly ?string $initiatorId,
     ) {}
 
@@ -33,15 +36,17 @@ class Command implements Arrayable, Jsonable
         return new static(
             id: $data['id'] ?? '',
             command: $attrs['command'] ?? '',
-            status: CommandStatus::from($attrs['status'] ?? 'pending'),
             output: $attrs['output'] ?? null,
-            exitCode: isset($attrs['exit_code']) ? (int) $attrs['exit_code'] : null,
+            outputTruncated: (bool) ($attrs['output_truncated'] ?? false),
+            outputUrl: $attrs['output_url'] ?? null,
+            status: CommandStatus::tryFrom($attrs['status'] ?? ''),
+            exitCode: $attrs['exit_code'] ?? null,
+            failureReason: $attrs['failure_reason'] ?? null,
             startedAt: isset($attrs['started_at']) ? CarbonImmutable::parse($attrs['started_at']) : null,
             finishedAt: isset($attrs['finished_at']) ? CarbonImmutable::parse($attrs['finished_at']) : null,
             createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            updatedAt: isset($attrs['updated_at']) ? CarbonImmutable::parse($attrs['updated_at']) : null,
             environmentId: $relationships['environment']['data']['id'] ?? null,
-            instanceId: $relationships['instance']['data']['id'] ?? null,
+            deploymentId: $relationships['deployment']['data']['id'] ?? null,
             initiatorId: $relationships['initiator']['data']['id'] ?? null,
         );
     }
@@ -59,21 +64,18 @@ class Command implements Arrayable, Jsonable
         return [
             'id' => $this->id,
             'command' => $this->command,
-            'status' => $this->status->value,
             'output' => $this->output,
+            'output_truncated' => $this->outputTruncated,
+            'output_url' => $this->outputUrl,
+            'status' => $this->status?->value,
             'exit_code' => $this->exitCode,
+            'failure_reason' => $this->failureReason,
             'started_at' => $this->startedAt?->toIso8601String(),
             'finished_at' => $this->finishedAt?->toIso8601String(),
             'created_at' => $this->createdAt?->toIso8601String(),
-            'updated_at' => $this->updatedAt?->toIso8601String(),
             'environment_id' => $this->environmentId,
-            'instance_id' => $this->instanceId,
+            'deployment_id' => $this->deploymentId,
             'initiator_id' => $this->initiatorId,
         ];
-    }
-
-    public function toJson($options = 0): string
-    {
-        return json_encode($this->toArray(), $options);
     }
 }

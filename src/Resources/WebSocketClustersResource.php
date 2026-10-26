@@ -2,58 +2,42 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\WebsocketCluster;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateWebSocketClusterRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateWebSocketClusterRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, WebsocketCluster> list(?string $type = null, ?string $region = null, ?string $status = null)
+ * @method WebsocketCluster find(string $id)
+ * @method WebsocketCluster create(string $name, string $region, string $type = 'reverb', int $maxConnections = 100)
+ * @method WebsocketCluster update(string $id, ?string $name = null, ?int $maxConnections = null)
+ * @method void delete(string $id)
+ */
 class WebSocketClustersResource extends Resource
 {
-    public function list(?string $type = null, ?string $region = null, ?string $status = null): Collection
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
+
+    protected string $model = WebsocketCluster::class;
+
+    protected string $collection = '/websocket-servers';
+
+    protected string $item = '/websocket-servers/{id}';
+
+    protected array $creating = ['name', 'region'];
+
+    protected array $defaults = ['type' => 'reverb', 'max_connections' => 100];
+
+    public function types(): array
     {
-        return $this->paginateAll(
-            new GetRequest('/websocket-servers', array_filter([
-                'filter[type]' => $type,
-                'filter[region]' => $region,
-                'filter[status]' => $status,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => WebsocketCluster::createFromResponse($item)
-        );
+        return $this->client->get('/websocket-servers/types')['data'] ?? [];
     }
 
-    public function get(string $clusterId): WebsocketCluster
+    public function metrics(string $id, ?string $period = null): array
     {
-        $response = $this->send(new GetRequest("/websocket-servers/{$clusterId}"));
-
-        return WebsocketCluster::createFromResponse($response->json());
-    }
-
-    public function create(CreateWebSocketClusterRequest $data): WebsocketCluster
-    {
-        $response = $this->send(new JsonRequest(Method::POST, '/websocket-servers', $data->toArray()));
-
-        return WebsocketCluster::createFromResponse($response->json());
-    }
-
-    public function update(UpdateWebSocketClusterRequest $data): WebsocketCluster
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/websocket-servers/{$data->clusterId}", $data->toArray()));
-
-        return WebsocketCluster::createFromResponse($response->json());
-    }
-
-    public function delete(string $clusterId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/websocket-servers/{$clusterId}"));
-    }
-
-    public function metrics(string $clusterId, ?string $period = null): array
-    {
-        $response = $this->send(new GetRequest("/websocket-servers/{$clusterId}/metrics", array_filter(['period' => $period], fn ($v) => $v !== null)));
-
-        return $response->json();
+        return $this->client->get("/websocket-servers/{$id}/metrics", $this->withoutNulls(['period' => $period]));
     }
 }

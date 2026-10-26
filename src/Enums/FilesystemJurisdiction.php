@@ -6,4 +6,5 @@ enum FilesystemJurisdiction: string
 {
     case Default = 'default';
     case EU = 'eu';
+    case US = 'us';
 }

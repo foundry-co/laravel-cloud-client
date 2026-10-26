@@ -2,54 +2,35 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\WebsocketApplication;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateWebSocketApplicationRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateWebSocketApplicationRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, WebsocketApplication> list()
+ * @method WebsocketApplication find(string $id)
+ * @method WebsocketApplication create(string $name, ?array $allowedOrigins = null, ?int $pingInterval = null, ?int $activityTimeout = null)
+ * @method WebsocketApplication update(string $id, ?string $name = null, ?array $allowedOrigins = null, ?int $pingInterval = null, ?int $activityTimeout = null)
+ * @method void delete(string $id)
+ */
 class WebSocketApplicationsResource extends Resource
 {
-    public function list(string $clusterId): Collection
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
+
+    protected string $model = WebsocketApplication::class;
+
+    protected string $collection = '/websocket-servers/{parent}/applications';
+
+    protected string $item = '/websocket-applications/{id}';
+
+    protected array $creating = ['name'];
+
+    public function metrics(string $id, ?string $period = null): array
     {
-        return $this->paginateAll(
-            new GetRequest("/websocket-servers/{$clusterId}/applications"),
-            fn ($item) => WebsocketApplication::createFromResponse($item)
-        );
-    }
-
-    public function get(string $applicationId): WebsocketApplication
-    {
-        $response = $this->send(new GetRequest("/websocket-applications/{$applicationId}"));
-
-        return WebsocketApplication::createFromResponse($response->json());
-    }
-
-    public function create(CreateWebSocketApplicationRequest $data): WebsocketApplication
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/websocket-servers/{$data->clusterId}/applications", $data->toArray()));
-
-        return WebsocketApplication::createFromResponse($response->json());
-    }
-
-    public function update(UpdateWebSocketApplicationRequest $data): WebsocketApplication
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/websocket-applications/{$data->applicationId}", $data->toArray()));
-
-        return WebsocketApplication::createFromResponse($response->json());
-    }
-
-    public function delete(string $applicationId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/websocket-applications/{$applicationId}"));
-    }
-
-    public function metrics(string $applicationId, ?string $period = null): array
-    {
-        $response = $this->send(new GetRequest("/websocket-applications/{$applicationId}/metrics", array_filter(['period' => $period], fn ($v) => $v !== null)));
-
-        return $response->json();
+        return $this->client->get("/websocket-applications/{$id}/metrics", $this->withoutNulls(['period' => $period]));
     }
 }

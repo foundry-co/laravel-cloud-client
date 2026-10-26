@@ -2,51 +2,32 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\ObjectStorageBucket;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateObjectStorageBucketRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateObjectStorageBucketRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, ObjectStorageBucket> list(?string $type = null, ?string $status = null, ?string $visibility = null)
+ * @method ObjectStorageBucket find(string $id)
+ * @method ObjectStorageBucket create(string $name, string $keyName, string $visibility = 'private', string $jurisdiction = 'default', mixed $locationHint = null, ?array $allowedOrigins = null, ?array $corsSettings = null, string $keyPermission = 'read_write')
+ * @method ObjectStorageBucket update(string $id, ?string $name = null, ?string $visibility = null, ?array $allowedOrigins = null, ?array $corsSettings = null)
+ * @method void delete(string $id)
+ */
 class ObjectStorageBucketsResource extends Resource
 {
-    public function list(?string $type = null, ?string $status = null, ?string $visibility = null): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest('/buckets', array_filter([
-                'filter[type]' => $type,
-                'filter[status]' => $status,
-                'filter[visibility]' => $visibility,
-            ], fn ($v) => $v !== null)),
-            fn ($item) => ObjectStorageBucket::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
 
-    public function get(string $bucketId): ObjectStorageBucket
-    {
-        $response = $this->send(new GetRequest("/buckets/{$bucketId}"));
+    protected string $model = ObjectStorageBucket::class;
 
-        return ObjectStorageBucket::createFromResponse($response->json());
-    }
+    protected string $collection = '/buckets';
 
-    public function create(CreateObjectStorageBucketRequest $data): ObjectStorageBucket
-    {
-        $response = $this->send(new JsonRequest(Method::POST, '/buckets', $data->toArray()));
+    protected string $item = '/buckets/{id}';
 
-        return ObjectStorageBucket::createFromResponse($response->json());
-    }
+    protected array $creating = ['name'];
 
-    public function update(UpdateObjectStorageBucketRequest $data): ObjectStorageBucket
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/buckets/{$data->bucketId}", $data->toArray()));
-
-        return ObjectStorageBucket::createFromResponse($response->json());
-    }
-
-    public function delete(string $bucketId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/buckets/{$bucketId}"));
-    }
+    protected array $defaults = ['visibility' => 'private', 'jurisdiction' => 'default', 'key_permission' => 'read_write'];
 }

@@ -3,11 +3,16 @@
 namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesItself;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesItself;
+use FoundryCo\LaravelCloudClient\Resources\WebSocketApplicationsResource;
 
-class WebsocketApplication implements Arrayable, Jsonable
+class WebsocketApplication extends Model
 {
+    use DeletesItself, UpdatesItself;
+
+    protected static string $resource = WebSocketApplicationsResource::class;
+
     public function __construct(
         public readonly string $id,
         public readonly string $name,
@@ -17,8 +22,6 @@ class WebsocketApplication implements Arrayable, Jsonable
         public readonly int $activityTimeout,
         public readonly int $maxMessageSize,
         public readonly int $maxConnections,
-        public readonly string $key,
-        public readonly string $secret,
         public readonly ?CarbonImmutable $createdAt,
         public readonly ?string $serverId,
     ) {}
@@ -34,12 +37,10 @@ class WebsocketApplication implements Arrayable, Jsonable
             name: $attrs['name'] ?? '',
             appId: $attrs['app_id'] ?? '',
             allowedOrigins: $attrs['allowed_origins'] ?? [],
-            pingInterval: (int) ($attrs['ping_interval'] ?? 30),
-            activityTimeout: (int) ($attrs['activity_timeout'] ?? 30),
-            maxMessageSize: (int) ($attrs['max_message_size'] ?? 10240),
-            maxConnections: (int) ($attrs['max_connections'] ?? 1000),
-            key: $attrs['key'] ?? '',
-            secret: $attrs['secret'] ?? '',
+            pingInterval: (int) ($attrs['ping_interval'] ?? 0),
+            activityTimeout: (int) ($attrs['activity_timeout'] ?? 0),
+            maxMessageSize: (int) ($attrs['max_message_size'] ?? 0),
+            maxConnections: (int) ($attrs['max_connections'] ?? 0),
             createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
             serverId: $relationships['server']['data']['id'] ?? null,
         );
@@ -56,15 +57,13 @@ class WebsocketApplication implements Arrayable, Jsonable
             'activity_timeout' => $this->activityTimeout,
             'max_message_size' => $this->maxMessageSize,
             'max_connections' => $this->maxConnections,
-            'key' => $this->key,
-            'secret' => $this->secret,
             'created_at' => $this->createdAt?->toIso8601String(),
             'server_id' => $this->serverId,
         ];
     }
 
-    public function toJson($options = 0): string
+    public function metrics(?string $period = null): array
     {
-        return json_encode($this->toArray(), $options);
+        return $this->resource()->metrics($this->id, $period);
     }
 }

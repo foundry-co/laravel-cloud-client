@@ -9,32 +9,32 @@ use Illuminate\Contracts\Support\Jsonable;
 class EnvironmentLog implements Arrayable, Jsonable
 {
     public function __construct(
-        public readonly ?string $id,
         public readonly string $level,
+        public readonly string $type,
         public readonly string $message,
-        public readonly ?CarbonImmutable $timestamp,
-        public readonly array $context,
+        public readonly ?CarbonImmutable $loggedAt,
+        public readonly mixed $data,
     ) {}
 
     public static function createFromResponse(array $data): static
     {
         return new static(
-            id: $data['id'] ?? null,
             level: $data['level'] ?? '',
+            type: $data['type'] ?? '',
             message: $data['message'] ?? '',
-            timestamp: isset($data['timestamp']) ? CarbonImmutable::parse($data['timestamp']) : null,
-            context: $data['context'] ?? [],
+            loggedAt: isset($data['logged_at']) ? CarbonImmutable::parse($data['logged_at']) : null,
+            data: $data['data'] ?? null,
         );
     }
 
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
             'level' => $this->level,
+            'type' => $this->type,
             'message' => $this->message,
-            'timestamp' => $this->timestamp?->toIso8601String(),
-            'context' => $this->context,
+            'logged_at' => $this->loggedAt?->toIso8601String(),
+            'data' => $this->data,
         ];
     }
 

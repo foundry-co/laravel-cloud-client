@@ -2,47 +2,32 @@
 
 namespace FoundryCo\LaravelCloudClient\Resources;
 
+use FoundryCo\LaravelCloudClient\Concerns\CreatesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesRecords;
+use FoundryCo\LaravelCloudClient\Concerns\FindsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\ListsRecords;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesRecords;
 use FoundryCo\LaravelCloudClient\Data\BackgroundProcess;
-use FoundryCo\LaravelCloudClient\Http\GetRequest;
-use FoundryCo\LaravelCloudClient\Http\JsonRequest;
-use FoundryCo\LaravelCloudClient\Requests\CreateBackgroundProcessRequest;
-use FoundryCo\LaravelCloudClient\Requests\UpdateBackgroundProcessRequest;
 use Illuminate\Support\Collection;
-use Saloon\Enums\Method;
 
+/**
+ * @method Collection<int, BackgroundProcess> list()
+ * @method BackgroundProcess find(string $id)
+ * @method BackgroundProcess create(string $type, ?string $command = null, int $processes = 1, ?array $config = null)
+ * @method BackgroundProcess update(string $id, ?string $type = null, ?int $processes = null, ?string $command = null, ?array $config = null)
+ * @method void delete(string $id)
+ */
 class BackgroundProcessesResource extends Resource
 {
-    public function list(string $instanceId): Collection
-    {
-        return $this->paginateAll(
-            new GetRequest("/instances/{$instanceId}/background-processes"),
-            fn ($item) => BackgroundProcess::createFromResponse($item)
-        );
-    }
+    use CreatesRecords, DeletesRecords, FindsRecords, ListsRecords, UpdatesRecords;
 
-    public function get(string $backgroundProcessId): BackgroundProcess
-    {
-        $response = $this->send(new GetRequest("/background-processes/{$backgroundProcessId}"));
+    protected string $model = BackgroundProcess::class;
 
-        return BackgroundProcess::createFromResponse($response->json());
-    }
+    protected string $collection = '/instances/{parent}/background-processes';
 
-    public function create(CreateBackgroundProcessRequest $data): BackgroundProcess
-    {
-        $response = $this->send(new JsonRequest(Method::POST, "/instances/{$data->instanceId}/background-processes", $data->toArray()));
+    protected string $item = '/background-processes/{id}';
 
-        return BackgroundProcess::createFromResponse($response->json());
-    }
+    protected array $creating = ['type', 'command'];
 
-    public function update(UpdateBackgroundProcessRequest $data): BackgroundProcess
-    {
-        $response = $this->send(new JsonRequest(Method::PATCH, "/background-processes/{$data->backgroundProcessId}", $data->toArray()));
-
-        return BackgroundProcess::createFromResponse($response->json());
-    }
-
-    public function delete(string $backgroundProcessId): void
-    {
-        $this->send(new JsonRequest(Method::DELETE, "/background-processes/{$backgroundProcessId}"));
-    }
+    protected array $defaults = ['processes' => 1];
 }

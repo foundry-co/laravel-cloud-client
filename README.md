@@ -1,6 +1,6 @@
 # Laravel Cloud Client
 
-A Laravel client for the [Laravel Cloud API](https://cloud.laravel.com/docs/api/introduction), built on [Saloon](https://docs.saloon.dev).
+A fluent Laravel client for the [Laravel Cloud API](https://cloud.laravel.com/docs/api/introduction), built on Laravel's HTTP client.
 
 ## Installation
 
@@ -26,7 +26,27 @@ Use the `Cloud` facade or resolve `CloudClient` from the container.
 
 ```php
 use FoundryCo\LaravelCloudClient\Facades\Cloud;
+
+$application = Cloud::applications()->find($applicationId);
+
+$environment = $application->environments()->create(name: 'production', branch: 'main');
+
+$environment->update(phpVersion: '8.3', buildCommand: 'npm run build');
+$environment->addVariables(['APP_DEBUG' => 'false']);
+$environment->domains()->create('example.com', wwwRedirect: 'www');
+$environment->deploy();
 ```
+
+Every record is an immutable model that knows its client. Calling `update()` or `refresh()` returns a fresh instance, and children are reached through relationship methods such as `$environment->domains()`.
+
+### Conventions
+
+- **Attributes** are passed as named arguments in camelCase (`wwwRedirect: 'www'`). They are sent as snake_case, and `null` values are omitted.
+- **Required attributes** can be passed positionally: `create('example.com')`, `create('production', 'main')`.
+- **Filters** are named arguments on `list()`: `list(status: 'running')` sends `filter[status]=running`.
+- **Pagination** is automatic. `list()` returns a `Collection` of every page.
+- **Scoping.** Child resources take their parent as an optional argument: `Cloud::domains($environmentId)`. The same resource is available from the parent model: `$environment->domains()`.
+- **Errors** throw `AuthenticationException` (401), `NotFoundException` (404), `ValidationException` (422, with `->errors`) or `CloudApiException`.
 
 ---
 
@@ -35,337 +55,265 @@ use FoundryCo\LaravelCloudClient\Facades\Cloud;
 ```php
 Cloud::applications()->list();
 Cloud::applications()->list(name: 'my-app', region: 'us-east-1');
+Cloud::applications()->find($applicationId);
+Cloud::applications()->create(repository: 'my-org/my-repo', name: 'My App', region: 'us-east-1');
 
-Cloud::applications()->get($applicationId);
-
-Cloud::applications()->create(new CreateApplicationRequest(
-    repository: 'my-org/my-repo',
-    name: 'My App',
-    region: 'us-east-1',
-));
-
-Cloud::applications()->update(new UpdateApplicationRequest(
-    applicationId: $applicationId,
-    name: 'New Name',
-));
-
-Cloud::applications()->delete($applicationId);
-
-Cloud::applications()->uploadAvatar($applicationId, '/path/to/avatar.png');
+$application->update(name: 'New Name');
+$application->uploadAvatar('/path/to/avatar.png');
+$application->deleteAvatar();
+$application->environments();
+$application->delete();
 ```
-
----
 
 ### Environments
 
 ```php
-Cloud::environments()->list($applicationId);
-Cloud::environments()->list($applicationId, status: 'running');
+Cloud::environments($applicationId)->list(status: 'running');
+Cloud::environments()->find($environmentId);
 
-Cloud::environments()->get($environmentId);
+$environment->update(phpVersion: '8.3', usesOctane: true);
+$environment->start(redeploy: true);
+$environment->stop();
+$environment->purgeEdgeCache(path: '/assets');
+$environment->metrics(period: '24h');
+$environment->logs(from: '2024-01-01T00:00:00Z', to: '2024-01-02T00:00:00Z', query: 'error', caseSensitive: true);
+$environment->run('php artisan about');
+$environment->deploy();
+$environment->delete();
 
-Cloud::environments()->create(new CreateEnvironmentRequest(
-    applicationId: $applicationId,
-    name: 'production',
-    branch: 'main',
-));
+$environment->addVariables(['APP_DEBUG' => 'false']);
+$environment->replaceVariables(['APP_ENV' => 'production']);
+$environment->deleteVariables(['OLD_KEY']);
 
-Cloud::environments()->update(new UpdateEnvironmentRequest(
-    environmentId: $environmentId,
-    phpVersion: '8.3',
-    buildCommand: 'npm run build',
-));
+$environment->updateVanityDomain('my-app');
+$environment->attachSecrets([$secretId]);
+$environment->detachSecret($secretId);
 
-Cloud::environments()->start($environmentId);
-Cloud::environments()->stop($environmentId);
-Cloud::environments()->purgeCache($environmentId);
-
-Cloud::environments()->addVariables(new AddEnvironmentVariablesRequest(
-    environmentId: $environmentId,
-    variables: ['APP_DEBUG' => 'false', 'QUEUE_CONNECTION' => 'redis'],
-));
-
-Cloud::environments()->replaceVariables(new ReplaceEnvironmentVariablesRequest(
-    environmentId: $environmentId,
-    variables: ['APP_ENV' => 'production'],
-));
-
-Cloud::environments()->metrics($environmentId, period: '24h');
-Cloud::environments()->logs($environmentId, from: '2024-01-01T00:00:00Z', to: '2024-01-02T00:00:00Z');
+$environment->attachResend(fromAddress: 'hi@example.com', fromName: 'Example');
+$environment->updateResend(fromAddress: 'hello@example.com', fromName: 'Example');
+$environment->resendKeys();
+$environment->detachResend();
 ```
 
----
+`start()` returns the `Deployment`. The other actions return the updated `Environment`. Variables may be given as `['KEY' => 'value']` or as the API's `[['key' => 'KEY', 'value' => 'value']]`.
+
+Relationships: `domains()`, `instances()`, `deployments()`, `commands()`.
 
 ### Deployments
 
 ```php
-Cloud::deployments()->list($environmentId);
-Cloud::deployments()->list($environmentId, status: 'deployment.succeeded');
+$environment->deployments()->list(status: 'deployment.succeeded');
+Cloud::deployments()->find($deploymentId);
 
-Cloud::deployments()->get($deploymentId);
-
-Cloud::deployments()->initiate(new CreateDeploymentRequest(
-    environmentId: $environmentId,
-));
-
-Cloud::deployments()->logs($deploymentId);
+$deployment = $environment->deploy();
+$deployment->status;
+$deployment->succeeded();
+$deployment->failed();
+$deployment->isInProgress();
+$deployment->logs();
 ```
-
----
 
 ### Domains
 
 ```php
-Cloud::domains()->list($environmentId);
+$environment->domains()->list();
+$domain = $environment->domains()->create('example.com', wildcardEnabled: true);
 
-Cloud::domains()->get($domainId);
-
-Cloud::domains()->create(new CreateDomainRequest(
-    environmentId: $environmentId,
-    name: 'example.com',
-));
-
-Cloud::domains()->update(new UpdateDomainRequest(
-    domainId: $domainId,
-    wwwRedirect: 'www',
-));
-
-Cloud::domains()->verify($domainId);
-Cloud::domains()->delete($domainId);
+$domain->update(verificationMethod: 'real_time');
+$domain->verify();
+$domain->isPrimary();
+$domain->delete();
 ```
-
----
 
 ### Instances
 
 ```php
-Cloud::instances()->list($environmentId);
-Cloud::instances()->sizes();
-
-Cloud::instances()->get($instanceId);
-
-Cloud::instances()->create(new CreateInstanceRequest(
-    environmentId: $environmentId,
+$environment->instances()->create(
     name: 'web',
-    type: InstanceType::SERVICE,
-    size: 'small-1x',
-    scalingType: InstanceScalingType::AUTO,
+    type: InstanceType::Service,
+    size: 'flex-1gb',
+    scalingType: InstanceScalingType::Auto,
     minReplicas: 1,
     maxReplicas: 3,
-));
+);
 
-Cloud::instances()->update(new UpdateInstanceRequest(
-    instanceId: $instanceId,
-    size: 'medium-1x',
-));
+Cloud::instances()->sizes();
 
-Cloud::instances()->delete($instanceId);
+$instance->update(maxReplicas: 5);
+$instance->delete();
 
-// Managed queues
-Cloud::instances()->pause($instanceId);
-Cloud::instances()->resume($instanceId);
-Cloud::instances()->purge($instanceId);
-Cloud::instances()->setDefault($instanceId);
-Cloud::instances()->failedJobs($instanceId);
-Cloud::instances()->retryFailedJob($instanceId, $jobId);
-Cloud::instances()->deleteFailedJob($instanceId, $jobId);
+$instance->backgroundProcesses();
+$instance->scheduledCommands();
+
+$instance->setDefault();
+$instance->pause();
+$instance->resume();
+$instance->purge();
+$instance->failedJobs();
+$instance->retryFailedJob($jobId);
+$instance->deleteFailedJob($jobId);
+$instance->deleteFailedJobs(jobIds: [$jobId], failedBefore: '2024-01-01');
 ```
 
----
+### Scheduled Commands
+
+```php
+$instance->scheduledCommands()->list();
+$instance->scheduledCommands()->create('php artisan reports:send', '0 8 * * *', name: 'Daily report');
+
+$command->update(schedule: '0 9 * * *');
+$command->delete();
+```
 
 ### Background Processes
 
 ```php
-Cloud::backgroundProcesses()->list($instanceId);
-Cloud::backgroundProcesses()->get($backgroundProcessId);
+$instance->backgroundProcesses()->list();
+$instance->backgroundProcesses()->create(type: 'worker', command: 'php artisan queue:work', processes: 2);
 
-Cloud::backgroundProcesses()->create(new CreateBackgroundProcessRequest(
-    instanceId: $instanceId,
-    type: 'worker',
-    command: 'php artisan queue:work',
-    processes: 2,
-));
-
-Cloud::backgroundProcesses()->update(new UpdateBackgroundProcessRequest(
-    backgroundProcessId: $backgroundProcessId,
-    processes: 4,
-));
-
-Cloud::backgroundProcesses()->delete($backgroundProcessId);
+$process->update(processes: 4);
+$process->delete();
 ```
-
----
 
 ### Commands
 
 ```php
-Cloud::commands()->list($environmentId);
-Cloud::commands()->get($commandId);
-
-Cloud::commands()->run(new RunCommandRequest(
-    environmentId: $environmentId,
-    command: 'php artisan migrate',
-));
+$environment->commands()->list(status: 'command.success');
+$command = $environment->run('php artisan migrate --force');
+$command->refresh();
 ```
-
----
 
 ### Database Clusters
 
 ```php
-Cloud::databaseClusters()->list();
+Cloud::databaseClusters()->list(type: 'neon_serverless_postgres');
 Cloud::databaseClusters()->types();
+Cloud::databaseClusters()->presets(type: 'neon_serverless_postgres', region: 'us-east-1');
 
-Cloud::databaseClusters()->get($clusterId);
-
-Cloud::databaseClusters()->create(new CreateDatabaseClusterRequest(
-    type: 'mysql_8',
+Cloud::databaseClusters()->create(
+    type: 'neon_serverless_postgres',
     name: 'my-db',
     region: 'us-east-1',
-    config: ['storage' => 20],
-));
+    version: $version,
+    config: ['cu_min' => 0.25, 'cu_max' => 1],
+);
 
-Cloud::databaseClusters()->metrics($clusterId, period: '24h');
-Cloud::databaseClusters()->delete($clusterId);
+$cluster->update(config: ['cu_max' => 2]);
+$cluster->metrics(period: '24h');
+$cluster->databases();
+$cluster->snapshots();
+$cluster->snapshot('before-migration');
+$cluster->restore(name: 'my-db-restored', snapshotId: $snapshotId);
+$cluster->delete();
 ```
 
----
+### Databases
 
-### Databases (schemas within a cluster)
+Schemas within a cluster.
 
 ```php
-Cloud::databases()->list($clusterId);
-Cloud::databases()->get($clusterId, $databaseId);
-
-Cloud::databases()->create(new CreateDatabaseRequest(
-    clusterId: $clusterId,
-    name: 'app_production',
-));
-
-Cloud::databases()->delete($clusterId, $databaseId);
+$cluster->databases()->list();
+$cluster->databases()->create('analytics');
+$database->delete();
 ```
-
----
 
 ### Database Snapshots
 
 ```php
-Cloud::databaseSnapshots()->list($clusterId);
-Cloud::databaseSnapshots()->get($clusterId, $snapshotId);
+$cluster->snapshots()->list();
+$snapshot = $cluster->snapshot('before-migration');
 
-Cloud::databaseSnapshots()->create(new CreateDatabaseSnapshotRequest(
-    clusterId: $clusterId,
-));
-
-Cloud::databaseSnapshots()->delete($clusterId, $snapshotId);
+$snapshot->restore('my-db-restored');
+$snapshot->delete();
 ```
-
-### Database Restores
-
-```php
-Cloud::databaseRestores()->create(new CreateDatabaseRestoreRequest(
-    snapshotId: $snapshotId,
-));
-```
-
----
 
 ### Caches
 
 ```php
 Cloud::caches()->list();
+Cloud::caches()->create(type: 'laravel_valkey', name: 'cache', region: 'us-east-1', size: 'valkey-flex-250mb');
 Cloud::caches()->types();
 
-Cloud::caches()->get($cacheId);
-
-Cloud::caches()->create(new CreateCacheRequest(
-    type: 'redis_7',
-    name: 'my-cache',
-    region: 'us-east-1',
-    size: 'small',
-));
-
-Cloud::caches()->metrics($cacheId, period: '24h');
-Cloud::caches()->delete($cacheId);
+$cache->update(size: 'valkey-flex-1gb');
+$cache->metrics(period: '24h');
+$cache->delete();
 ```
-
----
 
 ### Object Storage Buckets
 
 ```php
-Cloud::objectStorageBuckets()->list();
-Cloud::objectStorageBuckets()->get($bucketId);
+Cloud::objectStorageBuckets()->list(visibility: 'public');
+Cloud::objectStorageBuckets()->create(name: 'assets', keyName: 'uploads', visibility: 'public');
 
-Cloud::objectStorageBuckets()->create(new CreateObjectStorageBucketRequest(
-    name: 'my-bucket',
-    region: 'us-east-1',
-));
-
-Cloud::objectStorageBuckets()->update(new UpdateObjectStorageBucketRequest(
-    bucketId: $bucketId,
-    visibility: 'public',
-));
-
-Cloud::objectStorageBuckets()->delete($bucketId);
+$bucket->update(visibility: 'private', allowedOrigins: ['https://example.com']);
+$bucket->keys();
+$bucket->delete();
 ```
 
 ### Bucket Keys
 
 ```php
-Cloud::bucketKeys()->list($bucketId);
-Cloud::bucketKeys()->get($keyId);
+$bucket->keys()->list();
+$bucket->keys()->create('uploads', permission: 'read_only');
 
-Cloud::bucketKeys()->create(new CreateBucketKeyRequest(
-    bucketId: $bucketId,
-    name: 'deploy-key',
-    permission: 'read_write',
-));
-
-Cloud::bucketKeys()->delete($keyId);
+$key->update(name: 'renamed');
+$key->delete();
 ```
-
----
 
 ### WebSocket Clusters
 
 ```php
 Cloud::websocketClusters()->list();
-Cloud::websocketClusters()->get($clusterId);
+Cloud::websocketClusters()->types();
+Cloud::websocketClusters()->create(name: 'realtime', region: 'us-east-1', maxConnections: 500);
 
-Cloud::websocketClusters()->create(new CreateWebSocketClusterRequest(
-    name: 'my-reverb',
-    region: 'us-east-1',
-));
-
-Cloud::websocketClusters()->metrics($clusterId, period: '24h');
-Cloud::websocketClusters()->delete($clusterId);
+$cluster->update(maxConnections: 2000);
+$cluster->metrics(period: '24h');
+$cluster->applications();
+$cluster->delete();
 ```
 
 ### WebSocket Applications
 
 ```php
-Cloud::websocketApplications()->list($clusterId);
-Cloud::websocketApplications()->get($applicationId);
+$cluster->applications()->list();
+$cluster->applications()->create('chat', allowedOrigins: ['https://example.com'], pingInterval: 30);
 
-Cloud::websocketApplications()->create(new CreateWebSocketApplicationRequest(
-    clusterId: $clusterId,
-    name: 'my-app',
-));
-
-Cloud::websocketApplications()->metrics($applicationId, period: '24h');
-Cloud::websocketApplications()->delete($applicationId);
+$application->update(activityTimeout: 60);
+$application->metrics(period: '24h');
+$application->delete();
 ```
-
----
 
 ### Dedicated Clusters
 
 ```php
-Cloud::dedicatedClusters()->list();
+Cloud::dedicatedClusters()->list(region: 'us-east-1');
 ```
 
----
+### Edge Networks
+
+```php
+Cloud::edgeNetworks()->list(status: 'available');
+```
+
+### Resend Domains
+
+```php
+Cloud::resendDomains()->list(status: 'verified');
+```
+
+### Secrets
+
+```php
+Cloud::secrets()->list(key: 'STRIPE_KEY');
+Cloud::secrets()->publicKey();
+Cloud::secrets()->create(keyPairId: $keyPairId, key: 'STRIPE_KEY', value: $encryptedValue, notes: 'Live key');
+
+$secret->update(key: 'STRIPE_KEY', value: $encryptedValue);
+$secret->delete();
+```
+
+Secret values are submitted as the API expects them, encrypted against the organization's public key.
 
 ### Meta
 
@@ -378,25 +326,26 @@ Cloud::meta()->regions();
 
 ```php
 Cloud::usage()->get();
-Cloud::usage()->get(period: 1);
+Cloud::usage()->get(period: 1, environment: $environmentId);
 ```
-
----
 
 ## Testing
 
-In your application tests, use Saloon's `MockClient`:
+The client uses Laravel's HTTP client, so `Http::fake()` works as usual:
 
 ```php
-use Saloon\Http\Faking\MockClient;
-use Saloon\Http\Faking\MockResponse;
-use FoundryCo\LaravelCloudClient\CloudClient;
+use Illuminate\Support\Facades\Http;
 
-$mock = new MockClient([
-    '*' => MockResponse::make(['data' => [], 'links' => ['next' => null]]),
+Http::fake([
+    'cloud.laravel.com/api/applications*' => Http::response([
+        'data' => [['id' => 'app-1', 'type' => 'applications', 'attributes' => ['name' => 'My App']]],
+        'links' => ['next' => null],
+    ]),
 ]);
 
-app(CloudClient::class)->withMockClient($mock);
+Cloud::applications()->list();
+
+Http::assertSent(fn ($request) => $request->url() === 'https://cloud.laravel.com/api/applications?page=1');
 ```
 
 ## License

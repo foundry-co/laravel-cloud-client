@@ -8,68 +8,113 @@ use FoundryCo\LaravelCloudClient\Resources\BucketKeysResource;
 use FoundryCo\LaravelCloudClient\Resources\CachesResource;
 use FoundryCo\LaravelCloudClient\Resources\CommandsResource;
 use FoundryCo\LaravelCloudClient\Resources\DatabaseClustersResource;
-use FoundryCo\LaravelCloudClient\Resources\DatabaseRestoresResource;
 use FoundryCo\LaravelCloudClient\Resources\DatabaseSnapshotsResource;
 use FoundryCo\LaravelCloudClient\Resources\DatabasesResource;
 use FoundryCo\LaravelCloudClient\Resources\DedicatedClustersResource;
 use FoundryCo\LaravelCloudClient\Resources\DeploymentsResource;
 use FoundryCo\LaravelCloudClient\Resources\DomainsResource;
+use FoundryCo\LaravelCloudClient\Resources\EdgeNetworksResource;
 use FoundryCo\LaravelCloudClient\Resources\EnvironmentsResource;
 use FoundryCo\LaravelCloudClient\Resources\InstancesResource;
 use FoundryCo\LaravelCloudClient\Resources\MetaResource;
 use FoundryCo\LaravelCloudClient\Resources\ObjectStorageBucketsResource;
+use FoundryCo\LaravelCloudClient\Resources\ResendDomainsResource;
+use FoundryCo\LaravelCloudClient\Resources\ScheduledCommandsResource;
+use FoundryCo\LaravelCloudClient\Resources\SecretsResource;
 use FoundryCo\LaravelCloudClient\Resources\UsageResource;
 use FoundryCo\LaravelCloudClient\Resources\WebSocketApplicationsResource;
 use FoundryCo\LaravelCloudClient\Resources\WebSocketClustersResource;
-use Saloon\Http\Auth\TokenAuthenticator;
-use Saloon\Http\Connector;
-use Saloon\Http\Request;
-use Saloon\Http\Response;
-use Saloon\PaginationPlugin\Contracts\HasPagination;
-use Saloon\PaginationPlugin\PagedPaginator;
-use Saloon\PaginationPlugin\Paginator;
-use Saloon\Traits\Plugins\AlwaysThrowOnErrors;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Http;
 
-class CloudClient extends Connector implements HasPagination
+class CloudClient
 {
-    use AlwaysThrowOnErrors;
-
     public function __construct(
         #[\SensitiveParameter]
         protected readonly string $token,
+        protected readonly string $baseUrl = 'https://cloud.laravel.com/api',
     ) {}
 
-    public function resolveBaseUrl(): string
+    public function get(string $path, array $query = []): array
     {
-        return config('cloud.base_url', 'https://cloud.laravel.com/api');
+        return $this->respond($this->request()->get($path, $query));
     }
 
-    protected function defaultAuth(): TokenAuthenticator
+    public function post(string $path, array $data = []): array
     {
-        return new TokenAuthenticator($this->token);
+        return $this->respond($this->request()->post($path, $data));
     }
 
-    protected function defaultHeaders(): array
+    public function put(string $path, array $data = []): array
     {
-        return [
-            'Accept' => 'application/vnd.api+json',
-            'Content-Type' => 'application/vnd.api+json',
-        ];
+        return $this->respond($this->request()->put($path, $data));
     }
 
-    public function paginate(Request $request): Paginator
+    public function patch(string $path, array $data = []): array
     {
-        return new class($this, $request) extends PagedPaginator
-        {
-            protected function isLastPage(Response $response): bool
-            {
-                return is_null($response->json('links.next'));
+        return $this->respond($this->request()->patch($path, $data));
+    }
+
+    public function delete(string $path, array $query = []): array
+    {
+        return $this->respond($this->request()->withQueryParameters($query)->delete($path));
+    }
+
+    public function upload(string $path, string $field, string $file): array
+    {
+        $request = $this->pending()->attach($field, fopen($file, 'r'), basename($file));
+
+        return $this->respond($request->post($path));
+    }
+
+    public function paginate(string $path, array $query = []): Collection
+    {
+        $items = collect();
+        $page = 1;
+
+        do {
+            $body = $this->get($path, $query + ['page' => $page]);
+
+            foreach ($body['data'] ?? [] as $item) {
+                $items->push(['data' => $item, 'included' => $body['included'] ?? []]);
             }
+        } while (($body['links']['next'] ?? null) !== null && $page++);
 
-            protected function getPageItems(Response $response, Request $request): array
-            {
-                return $response->json('data') ?? [];
-            }
+        return $items;
+    }
+
+    protected function pending(): PendingRequest
+    {
+        return Http::baseUrl($this->baseUrl)
+            ->withToken($this->token)
+            ->accept('application/vnd.api+json');
+    }
+
+    protected function request(): PendingRequest
+    {
+        return $this->pending()->asJson();
+    }
+
+    protected function respond(Response $response): array
+    {
+        if ($response->failed()) {
+            throw $this->exception($response);
+        }
+
+        return $response->json() ?? [];
+    }
+
+    protected function exception(Response $response): \Throwable
+    {
+        $message = $response->json('message') ?? "Request failed with status {$response->status()}";
+
+        return match ($response->status()) {
+            401 => new Exceptions\AuthenticationException($message),
+            404 => new Exceptions\NotFoundException($message),
+            422 => new Exceptions\ValidationException($message, $response->json('errors') ?? []),
+            default => new Exceptions\CloudApiException($message),
         };
     }
 
@@ -78,34 +123,34 @@ class CloudClient extends Connector implements HasPagination
         return new ApplicationsResource($this);
     }
 
-    public function environments(): EnvironmentsResource
+    public function environments(?string $applicationId = null): EnvironmentsResource
     {
-        return new EnvironmentsResource($this);
+        return new EnvironmentsResource($this, $applicationId);
     }
 
-    public function deployments(): DeploymentsResource
+    public function deployments(?string $environmentId = null): DeploymentsResource
     {
-        return new DeploymentsResource($this);
+        return new DeploymentsResource($this, $environmentId);
     }
 
-    public function domains(): DomainsResource
+    public function domains(?string $environmentId = null): DomainsResource
     {
-        return new DomainsResource($this);
+        return new DomainsResource($this, $environmentId);
     }
 
-    public function instances(): InstancesResource
+    public function instances(?string $environmentId = null): InstancesResource
     {
-        return new InstancesResource($this);
+        return new InstancesResource($this, $environmentId);
     }
 
-    public function commands(): CommandsResource
+    public function commands(?string $environmentId = null): CommandsResource
     {
-        return new CommandsResource($this);
+        return new CommandsResource($this, $environmentId);
     }
 
-    public function backgroundProcesses(): BackgroundProcessesResource
+    public function backgroundProcesses(?string $instanceId = null): BackgroundProcessesResource
     {
-        return new BackgroundProcessesResource($this);
+        return new BackgroundProcessesResource($this, $instanceId);
     }
 
     public function databaseClusters(): DatabaseClustersResource
@@ -113,19 +158,14 @@ class CloudClient extends Connector implements HasPagination
         return new DatabaseClustersResource($this);
     }
 
-    public function databases(): DatabasesResource
+    public function databases(?string $clusterId = null): DatabasesResource
     {
-        return new DatabasesResource($this);
+        return new DatabasesResource($this, $clusterId);
     }
 
-    public function databaseSnapshots(): DatabaseSnapshotsResource
+    public function databaseSnapshots(?string $clusterId = null): DatabaseSnapshotsResource
     {
-        return new DatabaseSnapshotsResource($this);
-    }
-
-    public function databaseRestores(): DatabaseRestoresResource
-    {
-        return new DatabaseRestoresResource($this);
+        return new DatabaseSnapshotsResource($this, $clusterId);
     }
 
     public function objectStorageBuckets(): ObjectStorageBucketsResource
@@ -133,9 +173,9 @@ class CloudClient extends Connector implements HasPagination
         return new ObjectStorageBucketsResource($this);
     }
 
-    public function bucketKeys(): BucketKeysResource
+    public function bucketKeys(?string $bucketId = null): BucketKeysResource
     {
-        return new BucketKeysResource($this);
+        return new BucketKeysResource($this, $bucketId);
     }
 
     public function caches(): CachesResource
@@ -148,9 +188,9 @@ class CloudClient extends Connector implements HasPagination
         return new WebSocketClustersResource($this);
     }
 
-    public function websocketApplications(): WebSocketApplicationsResource
+    public function websocketApplications(?string $clusterId = null): WebSocketApplicationsResource
     {
-        return new WebSocketApplicationsResource($this);
+        return new WebSocketApplicationsResource($this, $clusterId);
     }
 
     public function meta(): MetaResource
@@ -166,5 +206,25 @@ class CloudClient extends Connector implements HasPagination
     public function usage(): UsageResource
     {
         return new UsageResource($this);
+    }
+
+    public function scheduledCommands(?string $instanceId = null): ScheduledCommandsResource
+    {
+        return new ScheduledCommandsResource($this, $instanceId);
+    }
+
+    public function secrets(): SecretsResource
+    {
+        return new SecretsResource($this);
+    }
+
+    public function edgeNetworks(): EdgeNetworksResource
+    {
+        return new EdgeNetworksResource($this);
+    }
+
+    public function resendDomains(): ResendDomainsResource
+    {
+        return new ResendDomainsResource($this);
     }
 }

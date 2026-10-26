@@ -3,23 +3,31 @@
 namespace FoundryCo\LaravelCloudClient\Data;
 
 use Carbon\CarbonImmutable;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Contracts\Support\Jsonable;
+use FoundryCo\LaravelCloudClient\Concerns\DeletesItself;
+use FoundryCo\LaravelCloudClient\Concerns\UpdatesItself;
+use FoundryCo\LaravelCloudClient\Resources\CachesResource;
 
-class Cache implements Arrayable, Jsonable
+class Cache extends Model
 {
+    use DeletesItself, UpdatesItself;
+
+    protected static string $resource = CachesResource::class;
+
     public function __construct(
         public readonly string $id,
-        public readonly string $type,
         public readonly string $name,
+        public readonly string $type,
         public readonly string $status,
         public readonly string $region,
         public readonly string $size,
         public readonly bool $autoUpgradeEnabled,
         public readonly bool $isPublic,
+        public readonly mixed $evictionPolicy,
+        public readonly bool $usesHibernation,
+        public readonly ?int $hibernationTimeout,
         public readonly ?CarbonImmutable $createdAt,
         public readonly array $connection,
-        public readonly array $environmentIds,
+        public readonly array $environmentsIds,
     ) {}
 
     public static function createFromResponse(array $response): static
@@ -30,16 +38,19 @@ class Cache implements Arrayable, Jsonable
 
         return new static(
             id: $data['id'] ?? '',
-            type: $attrs['type'] ?? '',
             name: $attrs['name'] ?? '',
+            type: $attrs['type'] ?? '',
             status: $attrs['status'] ?? '',
             region: $attrs['region'] ?? '',
             size: $attrs['size'] ?? '',
             autoUpgradeEnabled: (bool) ($attrs['auto_upgrade_enabled'] ?? false),
             isPublic: (bool) ($attrs['is_public'] ?? false),
+            evictionPolicy: $attrs['eviction_policy'] ?? null,
+            usesHibernation: (bool) ($attrs['uses_hibernation'] ?? false),
+            hibernationTimeout: isset($attrs['hibernation_timeout']) ? (int) $attrs['hibernation_timeout'] : null,
             createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
             connection: $attrs['connection'] ?? [],
-            environmentIds: collect($relationships['environments']['data'] ?? [])->pluck('id')->all(),
+            environmentsIds: collect($relationships['environments']['data'] ?? [])->pluck('id')->all(),
         );
     }
 
@@ -47,21 +58,24 @@ class Cache implements Arrayable, Jsonable
     {
         return [
             'id' => $this->id,
-            'type' => $this->type,
             'name' => $this->name,
+            'type' => $this->type,
             'status' => $this->status,
             'region' => $this->region,
             'size' => $this->size,
             'auto_upgrade_enabled' => $this->autoUpgradeEnabled,
             'is_public' => $this->isPublic,
+            'eviction_policy' => $this->evictionPolicy,
+            'uses_hibernation' => $this->usesHibernation,
+            'hibernation_timeout' => $this->hibernationTimeout,
             'created_at' => $this->createdAt?->toIso8601String(),
             'connection' => $this->connection,
-            'environment_ids' => $this->environmentIds,
+            'environments_ids' => $this->environmentsIds,
         ];
     }
 
-    public function toJson($options = 0): string
+    public function metrics(?string $period = null): array
     {
-        return json_encode($this->toArray(), $options);
+        return $this->resource()->metrics($this->id, $period);
     }
 }
