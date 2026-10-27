@@ -29,12 +29,12 @@ class ScheduledCommand extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? null,
-            command: $attrs['command'] ?? '',
-            schedule: $attrs['schedule'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            instanceId: $relationships['instance']['data']['id'] ?? null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::nullableString($attrs['name'] ?? null),
+            command: Cast::string($attrs['command'] ?? null),
+            schedule: Cast::string($attrs['schedule'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            instanceId: Cast::relation($relationships, 'instance'),
         );
     }
 

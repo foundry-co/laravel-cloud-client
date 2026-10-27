@@ -28,12 +28,12 @@ class Database extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            status: $attrs['status'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            databaseId: $relationships['database']['data']['id'] ?? null,
-            environmentsIds: collect($relationships['environments']['data'] ?? [])->pluck('id')->all(),
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            databaseId: Cast::relation($relationships, 'database'),
+            environmentsIds: Cast::relations($relationships, 'environments'),
         );
     }
 

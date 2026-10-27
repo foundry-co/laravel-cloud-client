@@ -26,13 +26,13 @@ class DedicatedCluster extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            region: $attrs['region'] ?? '',
-            type: $attrs['type'] ?? '',
-            tenancyType: $attrs['tenancy_type'] ?? '',
-            status: $attrs['status'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            region: Cast::string($attrs['region'] ?? null),
+            type: Cast::string($attrs['type'] ?? null),
+            tenancyType: Cast::string($attrs['tenancy_type'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
         );
     }
 

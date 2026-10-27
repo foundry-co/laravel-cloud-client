@@ -26,24 +26,24 @@ class Usage implements Arrayable, Jsonable
 
     public static function createFromResponse(array $response): static
     {
-        $data = $response['data'] ?? [];
-        $meta = $response['meta'] ?? [];
-        $summary = $data['summary'] ?? [];
+        $data = Cast::array($response['data'] ?? null);
+        $meta = Cast::array($response['meta'] ?? null);
+        $summary = Cast::array($data['summary'] ?? null);
 
         return new static(
-            currency: $meta['currency'] ?? 'USD',
-            period: (int) ($meta['period'] ?? 0),
-            availablePeriods: $meta['available_periods'] ?? [],
-            lastUpdatedAt: isset($meta['last_updated_at']) ? CarbonImmutable::parse($meta['last_updated_at']) : null,
-            currentSpendCents: (int) ($summary['current_spend_cents'] ?? 0),
-            bandwidth: $summary['bandwidth'] ?? null,
-            credits: $summary['credits'] ?? null,
-            alert: $summary['alert'] ?? null,
-            resources: $data['resources'] ?? [],
-            addons: $data['addons'] ?? [],
-            applicationTotals: $data['application_totals'] ?? [],
-            environmentUsage: $data['environment_usage'] ?? null,
-            privateCloud: $data['private_cloud'] ?? null,
+            currency: Cast::nullableString($meta['currency'] ?? null) ?? 'USD',
+            period: Cast::int($meta['period'] ?? null),
+            availablePeriods: Cast::array($meta['available_periods'] ?? null),
+            lastUpdatedAt: Cast::date($meta['last_updated_at'] ?? null),
+            currentSpendCents: Cast::int($summary['current_spend_cents'] ?? null),
+            bandwidth: Cast::nullableArray($summary['bandwidth'] ?? null),
+            credits: Cast::nullableArray($summary['credits'] ?? null),
+            alert: Cast::nullableArray($summary['alert'] ?? null),
+            resources: Cast::array($data['resources'] ?? null),
+            addons: Cast::array($data['addons'] ?? null),
+            applicationTotals: Cast::array($data['application_totals'] ?? null),
+            environmentUsage: Cast::nullableArray($data['environment_usage'] ?? null),
+            privateCloud: Cast::nullableArray($data['private_cloud'] ?? null),
         );
     }
 

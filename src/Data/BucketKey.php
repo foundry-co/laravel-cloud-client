@@ -30,13 +30,13 @@ class BucketKey extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            permission: $attrs['permission'] ?? '',
-            accessKeyId: $attrs['access_key_id'] ?? null,
-            accessKeySecret: $attrs['access_key_secret'] ?? null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            filesystemId: $relationships['filesystem']['data']['id'] ?? null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            permission: Cast::string($attrs['permission'] ?? null),
+            accessKeyId: Cast::nullableString($attrs['access_key_id'] ?? null),
+            accessKeySecret: Cast::nullableString($attrs['access_key_secret'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            filesystemId: Cast::relation($relationships, 'filesystem'),
         );
     }
 

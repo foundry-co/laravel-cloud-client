@@ -34,17 +34,17 @@ class DatabaseSnapshot extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? null,
-            description: $attrs['description'] ?? null,
-            type: $attrs['type'] ?? '',
-            status: $attrs['status'] ?? '',
-            storageBytes: isset($attrs['storage_bytes']) ? (int) $attrs['storage_bytes'] : null,
-            pitrEnabled: isset($attrs['pitr_enabled']) ? (bool) $attrs['pitr_enabled'] : null,
-            pitrEndsAt: isset($attrs['pitr_ends_at']) ? CarbonImmutable::parse($attrs['pitr_ends_at']) : null,
-            completedAt: isset($attrs['completed_at']) ? CarbonImmutable::parse($attrs['completed_at']) : null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            databaseId: $relationships['database']['data']['id'] ?? null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::nullableString($attrs['name'] ?? null),
+            description: Cast::nullableString($attrs['description'] ?? null),
+            type: Cast::string($attrs['type'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            storageBytes: Cast::nullableInt($attrs['storage_bytes'] ?? null),
+            pitrEnabled: Cast::nullableBool($attrs['pitr_enabled'] ?? null),
+            pitrEndsAt: Cast::date($attrs['pitr_ends_at'] ?? null),
+            completedAt: Cast::date($attrs['completed_at'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            databaseId: Cast::relation($relationships, 'database'),
         );
     }
 

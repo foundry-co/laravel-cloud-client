@@ -34,20 +34,20 @@ class Command extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            command: $attrs['command'] ?? '',
-            output: $attrs['output'] ?? null,
-            outputTruncated: (bool) ($attrs['output_truncated'] ?? false),
-            outputUrl: $attrs['output_url'] ?? null,
-            status: CommandStatus::tryFrom($attrs['status'] ?? ''),
+            id: Cast::string($data['id'] ?? null),
+            command: Cast::string($attrs['command'] ?? null),
+            output: Cast::nullableString($attrs['output'] ?? null),
+            outputTruncated: Cast::bool($attrs['output_truncated'] ?? null),
+            outputUrl: Cast::nullableString($attrs['output_url'] ?? null),
+            status: Cast::enum(CommandStatus::class, $attrs['status'] ?? null),
             exitCode: $attrs['exit_code'] ?? null,
-            failureReason: $attrs['failure_reason'] ?? null,
-            startedAt: isset($attrs['started_at']) ? CarbonImmutable::parse($attrs['started_at']) : null,
-            finishedAt: isset($attrs['finished_at']) ? CarbonImmutable::parse($attrs['finished_at']) : null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            environmentId: $relationships['environment']['data']['id'] ?? null,
-            deploymentId: $relationships['deployment']['data']['id'] ?? null,
-            initiatorId: $relationships['initiator']['data']['id'] ?? null,
+            failureReason: Cast::nullableString($attrs['failure_reason'] ?? null),
+            startedAt: Cast::date($attrs['started_at'] ?? null),
+            finishedAt: Cast::date($attrs['finished_at'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            environmentId: Cast::relation($relationships, 'environment'),
+            deploymentId: Cast::relation($relationships, 'deployment'),
+            initiatorId: Cast::relation($relationships, 'initiator'),
         );
     }
 

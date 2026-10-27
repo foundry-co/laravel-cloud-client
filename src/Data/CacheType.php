@@ -20,10 +20,10 @@ class CacheType implements Arrayable, Jsonable
         $attrs = $data['attributes'] ?? $data;
 
         return new static(
-            type: $attrs['type'] ?? '',
-            label: $attrs['label'] ?? '',
-            regions: $attrs['regions'] ?? [],
-            configSchema: $attrs['config_schema'] ?? [],
+            type: Cast::string($attrs['type'] ?? null),
+            label: Cast::string($attrs['label'] ?? null),
+            regions: Cast::array($attrs['regions'] ?? null),
+            configSchema: Cast::array($attrs['config_schema'] ?? null),
         );
     }
 

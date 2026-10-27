@@ -26,13 +26,13 @@ class ResendDomain extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            region: $attrs['region'] ?? '',
-            status: $attrs['status'] ?? '',
-            records: $attrs['records'] ?? null,
-            lastVerifiedAt: isset($attrs['last_verified_at']) ? CarbonImmutable::parse($attrs['last_verified_at']) : null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            region: Cast::string($attrs['region'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            records: Cast::nullableArray($attrs['records'] ?? null),
+            lastVerifiedAt: Cast::date($attrs['last_verified_at'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
         );
     }
 

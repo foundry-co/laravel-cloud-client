@@ -24,7 +24,7 @@ class Cache extends Model
         public readonly bool $isPublic,
         public readonly mixed $evictionPolicy,
         public readonly bool $usesHibernation,
-        public readonly ?int $hibernationTimeout,
+        public readonly mixed $hibernationTimeout,
         public readonly ?CarbonImmutable $createdAt,
         public readonly array $connection,
         public readonly array $environmentsIds,
@@ -37,20 +37,20 @@ class Cache extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            type: $attrs['type'] ?? '',
-            status: $attrs['status'] ?? '',
-            region: $attrs['region'] ?? '',
-            size: $attrs['size'] ?? '',
-            autoUpgradeEnabled: (bool) ($attrs['auto_upgrade_enabled'] ?? false),
-            isPublic: (bool) ($attrs['is_public'] ?? false),
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            type: Cast::string($attrs['type'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            region: Cast::string($attrs['region'] ?? null),
+            size: Cast::string($attrs['size'] ?? null),
+            autoUpgradeEnabled: Cast::bool($attrs['auto_upgrade_enabled'] ?? null),
+            isPublic: Cast::bool($attrs['is_public'] ?? null),
             evictionPolicy: $attrs['eviction_policy'] ?? null,
-            usesHibernation: (bool) ($attrs['uses_hibernation'] ?? false),
-            hibernationTimeout: isset($attrs['hibernation_timeout']) ? (int) $attrs['hibernation_timeout'] : null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            connection: $attrs['connection'] ?? [],
-            environmentsIds: collect($relationships['environments']['data'] ?? [])->pluck('id')->all(),
+            usesHibernation: Cast::bool($attrs['uses_hibernation'] ?? null),
+            hibernationTimeout: $attrs['hibernation_timeout'] ?? null,
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            connection: Cast::array($attrs['connection'] ?? null),
+            environmentsIds: Cast::relations($relationships, 'environments'),
         );
     }
 

@@ -19,10 +19,10 @@ class EnvironmentLog implements Arrayable, Jsonable
     public static function createFromResponse(array $data): static
     {
         return new static(
-            level: $data['level'] ?? '',
-            type: $data['type'] ?? '',
-            message: $data['message'] ?? '',
-            loggedAt: isset($data['logged_at']) ? CarbonImmutable::parse($data['logged_at']) : null,
+            level: Cast::string($data['level'] ?? null),
+            type: Cast::string($data['type'] ?? null),
+            message: Cast::string($data['message'] ?? null),
+            loggedAt: Cast::date($data['logged_at'] ?? null),
             data: $data['data'] ?? null,
         );
     }

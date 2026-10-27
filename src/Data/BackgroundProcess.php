@@ -32,15 +32,15 @@ class BackgroundProcess extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            type: $attrs['type'] ?? '',
-            processes: (int) ($attrs['processes'] ?? 0),
-            command: $attrs['command'] ?? '',
-            config: $attrs['config'] ?? [],
-            strategyType: $attrs['strategy_type'] ?? '',
-            strategyThreshold: isset($attrs['strategy_threshold']) ? (int) $attrs['strategy_threshold'] : null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            instanceId: $relationships['instance']['data']['id'] ?? null,
+            id: Cast::string($data['id'] ?? null),
+            type: Cast::string($attrs['type'] ?? null),
+            processes: Cast::int($attrs['processes'] ?? null),
+            command: Cast::string($attrs['command'] ?? null),
+            config: Cast::array($attrs['config'] ?? null),
+            strategyType: Cast::string($attrs['strategy_type'] ?? null),
+            strategyThreshold: Cast::nullableInt($attrs['strategy_threshold'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            instanceId: Cast::relation($relationships, 'instance'),
         );
     }
 

@@ -16,9 +16,9 @@ class Region implements Arrayable, Jsonable
     public static function createFromResponse(array $data): static
     {
         return new static(
-            value: $data['region'] ?? '',
-            label: $data['label'] ?? '',
-            flag: $data['flag'] ?? '',
+            value: Cast::string($data['region'] ?? null),
+            label: Cast::string($data['label'] ?? null),
+            flag: Cast::string($data['flag'] ?? null),
         );
     }
 

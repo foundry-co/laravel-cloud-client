@@ -25,12 +25,12 @@ class EdgeNetwork extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            domain: $attrs['domain'] ?? '',
-            tenancyType: $attrs['tenancy_type'] ?? '',
-            status: $attrs['status'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            domain: Cast::string($attrs['domain'] ?? null),
+            tenancyType: Cast::string($attrs['tenancy_type'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
         );
     }
 

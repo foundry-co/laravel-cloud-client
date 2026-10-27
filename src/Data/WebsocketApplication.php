@@ -23,6 +23,8 @@ class WebsocketApplication extends Model
         public readonly int $maxMessageSize,
         public readonly int $maxConnections,
         public readonly ?CarbonImmutable $createdAt,
+        public readonly ?string $key,
+        public readonly ?string $secret,
         public readonly ?string $serverId,
     ) {}
 
@@ -33,16 +35,18 @@ class WebsocketApplication extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            appId: $attrs['app_id'] ?? '',
-            allowedOrigins: $attrs['allowed_origins'] ?? [],
-            pingInterval: (int) ($attrs['ping_interval'] ?? 0),
-            activityTimeout: (int) ($attrs['activity_timeout'] ?? 0),
-            maxMessageSize: (int) ($attrs['max_message_size'] ?? 0),
-            maxConnections: (int) ($attrs['max_connections'] ?? 0),
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            serverId: $relationships['server']['data']['id'] ?? null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            appId: Cast::string($attrs['app_id'] ?? null),
+            allowedOrigins: Cast::array($attrs['allowed_origins'] ?? null),
+            pingInterval: Cast::int($attrs['ping_interval'] ?? null),
+            activityTimeout: Cast::int($attrs['activity_timeout'] ?? null),
+            maxMessageSize: Cast::int($attrs['max_message_size'] ?? null),
+            maxConnections: Cast::int($attrs['max_connections'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            key: Cast::nullableString($attrs['key'] ?? null),
+            secret: Cast::nullableString($attrs['secret'] ?? null),
+            serverId: Cast::relation($relationships, 'server'),
         );
     }
 
@@ -58,6 +62,8 @@ class WebsocketApplication extends Model
             'max_message_size' => $this->maxMessageSize,
             'max_connections' => $this->maxConnections,
             'created_at' => $this->createdAt?->toIso8601String(),
+            'key' => $this->key,
+            'secret' => $this->secret,
             'server_id' => $this->serverId,
         ];
     }

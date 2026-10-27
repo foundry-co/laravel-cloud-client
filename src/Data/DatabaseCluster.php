@@ -36,17 +36,17 @@ class DatabaseCluster extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            type: $attrs['type'] ?? '',
-            status: $attrs['status'] ?? '',
-            region: $attrs['region'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            type: Cast::string($attrs['type'] ?? null),
+            status: Cast::string($attrs['status'] ?? null),
+            region: Cast::string($attrs['region'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
             config: $attrs['config'] ?? null,
-            supportsPitr: $attrs['supports_pitr'] ?? '',
-            earliestRestoreTime: $attrs['earliest_restore_time'] ?? null,
-            connection: $attrs['connection'] ?? [],
-            databasesIds: collect($relationships['databases']['data'] ?? [])->pluck('id')->all(),
+            supportsPitr: Cast::string($attrs['supports_pitr'] ?? null),
+            earliestRestoreTime: Cast::nullableString($attrs['earliest_restore_time'] ?? null),
+            connection: Cast::array($attrs['connection'] ?? null),
+            databasesIds: Cast::relations($relationships, 'databases'),
         );
     }
 

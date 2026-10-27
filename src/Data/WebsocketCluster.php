@@ -38,16 +38,16 @@ class WebsocketCluster extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            type: WebsocketServerType::tryFrom($attrs['type'] ?? ''),
-            region: $attrs['region'] ?? '',
-            status: WebsocketServerStatus::tryFrom($attrs['status'] ?? ''),
-            maxConnections: WebsocketServerMaxConnection::tryFrom((int) ($attrs['max_connections'] ?? 0)),
-            connectionDistributionStrategy: WebsocketServerConnectionDistributionStrategy::tryFrom($attrs['connection_distribution_strategy'] ?? ''),
-            hostname: $attrs['hostname'] ?? '',
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            applicationsIds: collect($relationships['applications']['data'] ?? [])->pluck('id')->all(),
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            type: Cast::enum(WebsocketServerType::class, $attrs['type'] ?? null),
+            region: Cast::string($attrs['region'] ?? null),
+            status: Cast::enum(WebsocketServerStatus::class, $attrs['status'] ?? null),
+            maxConnections: Cast::enum(WebsocketServerMaxConnection::class, $attrs['max_connections'] ?? null),
+            connectionDistributionStrategy: Cast::enum(WebsocketServerConnectionDistributionStrategy::class, $attrs['connection_distribution_strategy'] ?? null),
+            hostname: Cast::string($attrs['hostname'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            applicationsIds: Cast::relations($relationships, 'applications'),
         );
     }
 

@@ -19,9 +19,9 @@ class Organization implements Arrayable, Jsonable
         $attrs = $data['attributes'] ?? $data;
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            slug: $attrs['slug'] ?? '',
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            slug: Cast::string($attrs['slug'] ?? null),
         );
     }
 

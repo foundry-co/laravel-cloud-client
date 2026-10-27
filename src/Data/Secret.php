@@ -29,12 +29,12 @@ class Secret extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            key: $attrs['key'] ?? '',
-            notes: $attrs['notes'] ?? null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            updatedAt: isset($attrs['updated_at']) ? CarbonImmutable::parse($attrs['updated_at']) : null,
-            environmentsIds: collect($relationships['environments']['data'] ?? [])->pluck('id')->all(),
+            id: Cast::string($data['id'] ?? null),
+            key: Cast::string($attrs['key'] ?? null),
+            notes: Cast::nullableString($attrs['notes'] ?? null),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            updatedAt: Cast::date($attrs['updated_at'] ?? null),
+            environmentsIds: Cast::relations($relationships, 'environments'),
         );
     }
 

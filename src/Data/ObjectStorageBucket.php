@@ -41,19 +41,19 @@ class ObjectStorageBucket extends Model
         $relationships = $data['relationships'] ?? [];
 
         return new static(
-            id: $data['id'] ?? '',
-            name: $attrs['name'] ?? '',
-            type: FilesystemType::tryFrom($attrs['type'] ?? ''),
-            status: FilesystemStatus::tryFrom($attrs['status'] ?? ''),
-            visibility: FilesystemVisibility::tryFrom($attrs['visibility'] ?? ''),
-            jurisdiction: FilesystemJurisdiction::tryFrom($attrs['jurisdiction'] ?? ''),
+            id: Cast::string($data['id'] ?? null),
+            name: Cast::string($attrs['name'] ?? null),
+            type: Cast::enum(FilesystemType::class, $attrs['type'] ?? null),
+            status: Cast::enum(FilesystemStatus::class, $attrs['status'] ?? null),
+            visibility: Cast::enum(FilesystemVisibility::class, $attrs['visibility'] ?? null),
+            jurisdiction: Cast::enum(FilesystemJurisdiction::class, $attrs['jurisdiction'] ?? null),
             locationHint: $attrs['location_hint'] ?? null,
-            endpoint: $attrs['endpoint'] ?? null,
-            url: $attrs['url'] ?? null,
+            endpoint: Cast::nullableString($attrs['endpoint'] ?? null),
+            url: Cast::nullableString($attrs['url'] ?? null),
             allowedOrigins: $attrs['allowed_origins'] ?? null,
             corsSettings: $attrs['cors_settings'] ?? null,
-            createdAt: isset($attrs['created_at']) ? CarbonImmutable::parse($attrs['created_at']) : null,
-            keysIds: collect($relationships['keys']['data'] ?? [])->pluck('id')->all(),
+            createdAt: Cast::date($attrs['created_at'] ?? null),
+            keysIds: Cast::relations($relationships, 'keys'),
         );
     }
 
